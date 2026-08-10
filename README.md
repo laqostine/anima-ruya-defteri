@@ -1,0 +1,80 @@
+# Anima — Rüya Defteri
+
+A Jungian dream notebook for **[Jungian Studies İstanbul](https://jungianstudiesistanbul.com)**.
+Mobile-first web app, opened by QR code. No install, no account, no server.
+
+**Live:** https://laqostine.github.io/anima-ruya-defteri/
+**QR card:** [`qr/anima-qr-kart-A6.pdf`](qr/anima-qr-kart-A6.pdf) (print-ready A6)
+
+---
+
+## What it does
+
+| Screen | Purpose |
+|---|---|
+| **Rüyalar** | The notebook — dated entries, search across text, symbols and archetypes |
+| **Yeni** | Five-step capture: the dream → waking feeling → archetypes → symbols → amplification |
+| **Semboller** | Lexicon of 12 archetypes + 36 dream symbols, each with a Jungian reading and a question to sit with. Shows how often each appears in *your* dreams |
+| **Desenler** | Stat tiles + frequency charts — what recurs across the series |
+| **Rehber** | Short method: record → context → amplify → wait. Includes the compensation principle and an explicit clinical limit |
+
+**Capture is staged on purpose.** The dream text comes first, alone, with nothing else on screen — that is the part that decays within minutes of waking. Tagging and reflection are asked for only after the record is safe.
+
+## Design decisions worth knowing
+
+- **Night theme is the default.** People write in this app at 4am in a dark bedroom. The light theme is a faithful match to the studio's cream/ink brand and is used when the system asks for it, or on demand.
+- **Turkish first, English available.** Full string parity; the lexicon is bilingual.
+- **Local-only storage.** Entries live in `localStorage` — dream material is intimate, and nothing here is worth the liability of a server. JSON export/import covers backup and device migration. This is stated plainly in-app.
+- **Works offline.** A service worker caches the shell and fonts, so the notebook opens with no signal.
+- **Charts are single-hue horizontal bars, direct-labeled**, never color-as-meaning. The mark palette passes CVD separation and ≥3:1 against both surfaces.
+- **Content is framed as interpretive, never diagnostic** — the guide names the limit and points to working with an analyst.
+
+## Accessibility
+
+Verified on the live build: contrast on the night theme is 17.0 : 1 (body), 9.1 : 1 (secondary), 4.7 : 1 (muted) — all above WCAG AA. Every control is ≥44px, focus rings are visible, the sheet traps focus and restores it on close, toasts announce via `aria-live`, and `prefers-reduced-motion` disables all animation. No horizontal scroll at 320px.
+
+## Structure
+
+```
+index.html              markup shell + tab bar + sheet/toast roots
+assets/css/style.css    tokens (both themes) and every component
+assets/js/lexicon.js    archetypes, symbols, moods, amplification prompts (tr/en)
+assets/js/i18n.js       UI strings + long-form guide content
+assets/js/app.js        store, hash router, views, capture flow
+sw.js                   offline shell
+qr/                     QR code + printable A6 card
+```
+
+No build step, no dependencies. Edit and reload.
+
+## Deploying
+
+```bash
+git push origin main          # GitHub Pages redeploys automatically
+```
+
+A Cloudflare Pages project (`anima-ruya-defteri`) also exists as a mirror:
+
+```bash
+wrangler pages deploy . --project-name=anima-ruya-defteri
+```
+
+> **Note:** `*.pages.dev` is DNS-blocked on Turkish ISPs and is unreachable for the actual audience. The Cloudflare deploy is only useful once a custom domain is attached. GitHub Pages is the working host today.
+
+### Moving to the studio's own domain (recommended)
+
+Point a subdomain at the site — e.g. `ruya.jungianstudiesistanbul.com` — then regenerate the QR so the printed card carries the branded URL:
+
+```bash
+node scripts/mkqr.js https://ruya.jungianstudiesistanbul.com/
+```
+
+The card, SVG, PNG and print PDF are all rebuilt from that one argument.
+
+## Next step: native app
+
+The web build is deliberately the same information architecture a React Native / Expo port would use — five tabs, the same capture stages, the same lexicon module. `assets/js/lexicon.js` and `assets/js/i18n.js` are plain data and port across unchanged.
+
+---
+
+Content draws on Jung's *Collected Works* (esp. CW 8, CW 9i, CW 12) and standard analytical-psychology teaching material. It is reflective material, not diagnosis or treatment.
