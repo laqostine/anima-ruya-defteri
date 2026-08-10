@@ -492,6 +492,83 @@ a { color: inherit; text-decoration: none; }
 @keyframes barGrow { from { width: 0; } }
 .bar__cap { position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: var(--c, var(--chart-1)); }
 
+/* ---------- 12b. Constellation map ---------- */
+.cn-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: var(--sp-2);
+  overflow: hidden;
+}
+.cn { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.cn__edges line { transition: stroke-opacity var(--dur-fast) var(--ease); }
+.cn__node { cursor: pointer; }
+.cn__node > :not(text) {
+  transition: transform var(--dur-fast) var(--ease), fill-opacity var(--dur-fast) var(--ease);
+  transform-box: fill-box; transform-origin: center;
+}
+.cn__node:hover > :not(text), .cn__node:focus-visible > :not(text) { fill-opacity: .5; }
+.cn__node:focus { outline: none; }
+.cn__node:focus-visible > rect, .cn__node:focus-visible > circle:not([fill="transparent"]) {
+  stroke-width: 3;
+}
+.cn__label {
+  font-family: var(--font-ui); font-size: 10.5px; font-weight: 500;
+  fill: var(--ink-2); paint-order: stroke;
+  stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round;
+}
+
+.cn-legend {
+  display: flex; flex-wrap: wrap; gap: var(--sp-4);
+  margin-top: var(--sp-3); font-size: 12.5px; color: var(--ink-3);
+}
+.cn-key { display: inline-flex; align-items: center; gap: 7px; }
+.cn-key i { display: block; flex: none; }
+.cn-key__arch {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1.6px solid var(--chart-1); background: color-mix(in srgb, var(--chart-1) 26%, transparent);
+}
+.cn-key__sym {
+  width: 11px; height: 11px; rotate: 45deg; border-radius: 2px;
+  border: 1.6px solid var(--chart-3); background: color-mix(in srgb, var(--chart-3) 22%, transparent);
+}
+.cn-key__link { width: 16px; height: 2px; border-radius: 1px; background: var(--ink-3); opacity: .6; }
+
+/* ---------- 12c. Reading cards ---------- */
+.readings { display: flex; flex-direction: column; gap: var(--sp-3); }
+.reading {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 2px solid var(--primary);
+  border-radius: var(--r-md); padding: var(--sp-4);
+  animation: cardIn var(--dur) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+.reading__title {
+  font-family: var(--font-display); font-size: 17.5px; font-weight: 500;
+  line-height: 1.3; margin-bottom: 8px;
+}
+.reading__text { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+.reading__ask {
+  font-family: var(--font-display); font-style: italic; font-size: 15.5px;
+  line-height: 1.5; color: var(--ink); margin-top: var(--sp-3);
+}
+.reading__more {
+  min-height: 40px; margin: var(--sp-2) 0 calc(var(--sp-2) * -1) -10px;
+  padding: 0 10px; border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--primary-ink);
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.reading__more:hover { background: var(--primary-sub); }
+
+/* ---------- 12d. Data table (accessible chart alternative) ---------- */
+.dtable { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dtable th {
+  text-align: left; font-size: 11px; font-weight: 600;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
+  padding: 0 var(--sp-3) var(--sp-2) 0; border-bottom: 1px solid var(--border);
+}
+.dtable td { padding: 11px var(--sp-3) 11px 0; border-bottom: 1px solid var(--border); color: var(--ink-2); }
+.dtable tr:last-child td { border-bottom: 0; }
+.dtable .num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; color: var(--ink); }
+
 /* ---------- 13. Lexicon list ---------- */
 .lex-list { display: flex; flex-direction: column; gap: 2px; }
 .lex-item {

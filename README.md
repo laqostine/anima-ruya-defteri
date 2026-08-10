@@ -3,7 +3,7 @@
 A Jungian dream notebook for **[Jungian Studies İstanbul](https://jungianstudiesistanbul.com)**.
 Mobile-first web app, opened by QR code. No install, no account, no server.
 
-**Live:** https://laqostine.github.io/anima-ruya-defteri/
+**Live:** https://anima-ruya-defteri.vercel.app (primary) · https://laqostine.github.io/anima-ruya-defteri/ (mirror)
 **QR card:** [`qr/anima-qr-kart-A6.pdf`](qr/anima-qr-kart-A6.pdf) (print-ready A6)
 
 ---
@@ -15,7 +15,8 @@ Mobile-first web app, opened by QR code. No install, no account, no server.
 | **Rüyalar** | The notebook — dated entries, search across text, symbols and archetypes |
 | **Yeni** | Five-step capture: the dream → waking feeling → archetypes → symbols → amplification |
 | **Semboller** | Lexicon of 12 archetypes + 36 dream symbols, each with a Jungian reading and a question to sit with. Shows how often each appears in *your* dreams |
-| **Desenler** | Stat tiles + frequency charts — what recurs across the series |
+| **Desenler › Özet** | Stat tiles + frequency charts — what recurs across the series |
+| **Desenler › Harita** | Constellation map of symbols and archetypes, plus a general reading derived from it |
 | **Rehber** | Short method: record → context → amplify → wait. Includes the compensation principle and an explicit clinical limit |
 
 **Capture is staged on purpose.** The dream text comes first, alone, with nothing else on screen — that is the part that decays within minutes of waking. Tagging and reflection are asked for only after the record is safe.
@@ -29,6 +30,19 @@ Mobile-first web app, opened by QR code. No install, no account, no server.
 - **Charts are single-hue horizontal bars, direct-labeled**, never color-as-meaning. The mark palette passes CVD separation and ≥3:1 against both surfaces.
 - **Content is framed as interpretive, never diagnostic** — the guide names the limit and points to working with an analyst.
 
+
+## The map and the reading
+
+`Desenler › Harita` draws every tagged symbol and archetype as a node; two nodes are joined when they appear in the same dream, and the line thickens with how often. Layout is a deterministic force simulation — the same series always produces the same map, so it is stable to return to. Archetypes are circles, symbols are diamonds: the kind reads without relying on hue. Labels are placed greedily and skipped on collision; every node names itself on tap and opens its lexicon entry.
+
+Below it, **Genel okuma** derives observations from the graph — a dominant archetype, the strongest bond, the hub, images standing alone, affective tone, recurrence and lucidity rates. Three rules govern it:
+
+1. **Nothing fires below three dreams.** The section says how many more are needed and stays shut.
+2. **A tie is not dominance.** If two archetypes lead equally, no dominance claim is made.
+3. **Every item ends in a question, never a verdict.** The app observes; the dreamer interprets.
+
+A `dtable` of the strongest bonds sits underneath as the accessible, non-visual reading of the same data.
+
 ## Accessibility
 
 Verified on the live build: contrast on the night theme is 17.0 : 1 (body), 9.1 : 1 (secondary), 4.7 : 1 (muted) — all above WCAG AA. Every control is ≥44px, focus rings are visible, the sheet traps focus and restores it on close, toasts announce via `aria-live`, and `prefers-reduced-motion` disables all animation. No horizontal scroll at 320px.
@@ -40,6 +54,7 @@ index.html              markup shell + tab bar + sheet/toast roots
 assets/css/style.css    tokens (both themes) and every component
 assets/js/lexicon.js    archetypes, symbols, moods, amplification prompts (tr/en)
 assets/js/i18n.js       UI strings + long-form guide content
+assets/js/constellation.js  graph build, force layout, reading rules (pure, no DOM)
 assets/js/app.js        store, hash router, views, capture flow
 sw.js                   offline shell
 qr/                     QR code + printable A6 card
@@ -50,7 +65,8 @@ No build step, no dependencies. Edit and reload.
 ## Deploying
 
 ```bash
-git push origin main          # GitHub Pages redeploys automatically
+vercel deploy --prod --yes    # primary host
+git push origin main          # GitHub Pages mirror redeploys automatically
 ```
 
 A Cloudflare Pages project (`anima-ruya-defteri`) also exists as a mirror:

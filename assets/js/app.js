@@ -674,7 +674,149 @@
       </div>`).join('')}</div>`;
   }
 
-  function viewPatterns() {
+  /* =========================================================
+     VIEW · Map (constellation + general reading)
+     ========================================================= */
+  let patTab = 'summary';
+
+  function buildGraph() {
+    const g = window.MAP.build(state.dreams, id => { const a = archById(id); return a ? L(a).name : null; });
+    return window.MAP.layout(g, 360, 340);
+  }
+
+  function nodeRadius(n, maxN) {
+    return 9 + Math.round((n.n / maxN) * 13);
+  }
+
+  function constellationSVG(g) {
+    if (!g.nodes.length) return '';
+    const W = 360, H = 340;
+    const maxN = Math.max(...g.nodes.map(d => d.n));
+    const maxW = g.links.length ? g.links[0].w : 1;
+    const pos = new Map(g.nodes.map(d => [d.key, d]));
+
+    const edges = g.links.map(l => {
+      const a = pos.get(l.source), b = pos.get(l.target);
+      if (!a || !b) return '';
+      const op = 0.16 + 0.4 * (l.w / maxW);
+      const sw = 1 + 2.2 * (l.w / maxW);
+      return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"
+        stroke="var(--ink-3)" stroke-width="${sw.toFixed(2)}" stroke-opacity="${op.toFixed(2)}" stroke-linecap="round"/>`;
+    }).join('');
+
+    // Label greedily by importance, skipping any label that would collide with
+    // one already placed. An unlabelled node still names itself on tap.
+    const placed = [];
+    const labelSet = new Set();
+    g.nodes.slice()
+      .sort((a, b) => b.n - a.n || b.degree - a.degree || a.label.localeCompare(b.label))
+      .forEach(d => {
+        if (labelSet.size >= 10) return;
+        const w = d.label.length * 5.3 + 4, h = 13;
+        const box = { x1: d.x - w / 2, x2: d.x + w / 2, y1: d.y + nodeRadius(d, maxN) + 4, y2: d.y + nodeRadius(d, maxN) + 4 + h };
+        const hits = placed.some(p => !(box.x2 < p.x1 || p.x2 < box.x1 || box.y2 < p.y1 || p.y2 < box.y1));
+        if (hits || box.x1 < 0 || box.x2 > W || box.y2 > H) return;
+        placed.push(box); labelSet.add(d.key);
+      });
+
+    const marks = g.nodes.map(d => {
+      const r = nodeRadius(d, maxN);
+      const isArch = d.kind === 'arch';
+      const c = isArch ? 'var(--chart-1)' : 'var(--chart-3)';
+      // Shape carries the kind as well as colour — the map must read without hue.
+      const shape = isArch
+        ? `<circle r="${r}" fill="${c}" fill-opacity=".26" stroke="${c}" stroke-width="1.8"/>`
+        : `<rect x="${-r * 0.86}" y="${-r * 0.86}" width="${r * 1.72}" height="${r * 1.72}" rx="${r * 0.3}"
+             transform="rotate(45)" fill="${c}" fill-opacity=".22" stroke="${c}" stroke-width="1.8"/>`;
+      const label = labelSet.has(d.key)
+        ? `<text y="${r + 13}" text-anchor="middle" class="cn__label">${esc(d.label)}</text>` : '';
+      return `<g class="cn__node" transform="translate(${d.x.toFixed(1)} ${d.y.toFixed(1)})"
+                 tabindex="0" role="button" data-node="${esc(d.kind)}:${esc(d.id)}"
+                 aria-label="${esc(d.label)} — ${esc(t('inThisMany', d.dreamIds.length))}">
+                <circle r="${Math.max(r + 10, 22)}" fill="transparent"/>${shape}${label}</g>`;
+    }).join('');
+
+    return `<svg class="cn" viewBox="0 0 ${W} ${H}" role="img"
+      aria-label="${esc(t('mapTitle'))} — ${g.nodes.length} · ${esc(t('mapLegendLink'))} ${g.links.length}">
+      <g class="cn__edges">${edges}</g>${marks}</svg>`;
+  }
+
+  function readingHTML(g) {
+    const res = window.MAP.analyze(state.dreams, g, {
+      L, moodById, archById, s: (k, ...a) => t(k, ...a)
+    });
+
+    if (!res.ready) {
+      return `<div class="section">
+        <h2 class="section__title">${esc(t('readingTitle'))}</h2>
+        <div class="card">
+          <p style="font-family:var(--font-display);font-size:17px;margin-bottom:8px">${esc(t('readingNeed', res.need))}</p>
+          <p class="hint" style="margin:0">${esc(t('readingNeedText'))}</p>
+        </div></div>`;
+    }
+    if (!res.items.length) return '';
+
+    const cards = res.items.map((it, i) => `
+      <article class="reading" style="--i:${i}">
+        <h3 class="reading__title">${esc(it.title)}</h3>
+        ${it.text ? `<p class="reading__text">${esc(it.text)}</p>` : ''}
+        ${it.ask ? `<p class="reading__ask">${esc(it.ask)}</p>` : ''}
+        ${it.kind === 'arch' ? `<button class="reading__more" type="button" data-openarch="${esc(it.ref)}">${esc(t('seeDetail'))}</button>` : ''}
+      </article>`).join('');
+
+    return `<div class="section">
+      <h2 class="section__title">${esc(t('readingTitle'))}</h2>
+      <p class="hint" style="margin:-4px 0 var(--sp-4)">${esc(t('readingSub'))}</p>
+      <div class="readings">${cards}</div></div>`;
+  }
+
+  function bondsTable(g) {
+    const rows = g.links.filter(l => l.w >= 2).slice(0, 8);
+    if (!rows.length) return '';
+    const by = new Map(g.nodes.map(d => [d.key, d.label]));
+    return `<div class="section">
+      <h2 class="section__title">${esc(t('mapTableTitle'))}</h2>
+      <table class="dtable">
+        <thead><tr>
+          <th scope="col">${esc(t('mapTableA'))}</th>
+          <th scope="col">${esc(t('mapTableB'))}</th>
+          <th scope="col" class="num">${esc(t('mapTableW'))}</th>
+        </tr></thead>
+        <tbody>${rows.map(l => `<tr>
+          <td>${esc(by.get(l.source) || '')}</td>
+          <td>${esc(by.get(l.target) || '')}</td>
+          <td class="num">${l.w}</td></tr>`).join('')}</tbody>
+      </table></div>`;
+  }
+
+  function viewMap() {
+    const g = buildGraph();
+    if (!g.nodes.length) {
+      return `<div class="empty">
+        <div class="empty__art">${icon('<circle cx="7" cy="7" r="3"/><circle cx="18" cy="10" r="2.5"/><circle cx="11" cy="18" r="2.5"/><path d="M9.6 8.4 15.5 9.6M8.4 9.7l1.9 5.9"/>')}</div>
+        <h2 class="empty__title">${esc(t('mapEmptyTitle'))}</h2>
+        <p class="empty__text">${esc(t('mapEmptyText'))}</p>
+        <a class="btn btn--primary" href="#/new">${icon(I.plus)}${esc(t('emptyCta'))}</a>
+      </div>`;
+    }
+    return `
+      <div class="section">
+        <p class="hint" style="margin:-4px 0 var(--sp-3)">${esc(t('mapSub'))}</p>
+        <div class="cn-wrap">${constellationSVG(g)}</div>
+        <div class="cn-legend">
+          <span class="cn-key"><i class="cn-key__arch"></i>${esc(t('mapLegendArch'))}</span>
+          <span class="cn-key"><i class="cn-key__sym"></i>${esc(t('mapLegendSym'))}</span>
+          <span class="cn-key"><i class="cn-key__link"></i>${esc(t('mapLegendLink'))}</span>
+        </div>
+      </div>
+      ${readingHTML(g)}
+      ${bondsTable(g)}`;
+  }
+
+  function viewPatterns(arg) {
+    // The sub-view lives in the URL, so it must be resolved before rendering,
+    // not in the mount handler that runs afterwards.
+    if (arg === 'map' || arg === 'summary') patTab = arg;
     const total = state.dreams.length;
     if (total < 1) {
       return `
@@ -713,18 +855,25 @@
         <div class="tile__label">${esc(label)}</div>
       </div>`).join('');
 
-    return `
-      <div class="page-head">
-        <h1 class="page-title">${esc(t('patternsTitle'))}</h1>
-        <p class="page-sub" style="max-width:36ch">${esc(t('patternsSub'))}</p>
-      </div>
+    const summary = `
       <div class="section"><div class="tiles">${tiles}</div></div>
       ${archRows.length ? `<div class="section">
         <h2 class="section__title">${esc(t('topArch'))}</h2>${bars(archRows, 'var(--chart-1)')}</div>` : ''}
       ${symRows.length ? `<div class="section">
         <h2 class="section__title">${esc(t('topSym'))}</h2>${bars(symRows, 'var(--chart-3)')}</div>` : ''}
       ${moodRows.length ? `<div class="section">
-        <h2 class="section__title">${esc(t('moodDist'))}</h2>${bars(moodRows, 'var(--chart-2)')}</div>` : ''}
+        <h2 class="section__title">${esc(t('moodDist'))}</h2>${bars(moodRows, 'var(--chart-2)')}</div>` : ''}`;
+
+    return `
+      <div class="page-head">
+        <h1 class="page-title">${esc(patTab === 'map' ? t('mapTitle') : t('patternsTitle'))}</h1>
+        ${patTab === 'summary' ? `<p class="page-sub" style="max-width:36ch">${esc(t('patternsSub'))}</p>` : ''}
+      </div>
+      <div class="segmented" role="group" aria-label="${esc(t('patternsTitle'))}" style="margin-bottom:var(--sp-5)">
+        <button type="button" data-pattab="summary" aria-pressed="${patTab === 'summary'}">${esc(t('tabSummary'))}</button>
+        <button type="button" data-pattab="map" aria-pressed="${patTab === 'map'}">${esc(t('tabMap'))}</button>
+      </div>
+      ${patTab === 'map' ? viewMap() : summary}
       ${footer()}`;
   }
 
@@ -927,6 +1076,32 @@
 
     new(root) { mountCapture(root); },
     edit(root) { mountCapture(root); },
+
+    patterns(root, arg) {
+      if (arg === 'map' || arg === 'summary') patTab = arg;
+      $$('[data-pattab]', root).forEach(b => b.addEventListener('click', () => {
+        patTab = b.dataset.pattab;
+        // Keep the sub-view in the URL so it can be shared and restored.
+        const target = '#/patterns' + (patTab === 'map' ? '/map' : '');
+        if (location.hash !== target) location.hash = target; else render();
+      }));
+
+      const open = key => {
+        const [kind, id] = key.split(':');
+        if (kind === 'arch') return openLexEntry('arch', id);
+        const s = symByName(id);
+        if (s) openLexEntry('sym', s.id);
+        else { query = id; go('/dreams'); }
+      };
+      $$('[data-node]', root).forEach(g => {
+        g.addEventListener('click', () => open(g.dataset.node));
+        g.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(g.dataset.node); }
+        });
+      });
+      $$('[data-openarch]', root).forEach(b =>
+        b.addEventListener('click', () => openLexEntry('arch', b.dataset.openarch)));
+    },
 
     symbols(root) {
       $$('[data-lextab]', root).forEach(b => b.addEventListener('click', () => { lexTab = b.dataset.lextab; render(); }));

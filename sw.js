@@ -1,6 +1,6 @@
 /* Anima — offline shell.
    The notebook must open at 4am on a phone with no signal. */
-const CACHE = 'anima-v1';
+const CACHE = 'anima-v2';
 const SHELL = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const SHELL = [
   './assets/css/style.css',
   './assets/js/lexicon.js',
   './assets/js/i18n.js',
+  './assets/js/constellation.js',
   './assets/js/app.js',
   './assets/icon.svg'
 ];
