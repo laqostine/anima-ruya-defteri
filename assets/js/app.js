@@ -693,7 +693,9 @@
      VIEW · Map (constellation + general reading)
      ========================================================= */
   let patTab = 'summary';
-  let mapLayer = 'mine';
+  // A brand-new notebook has nothing of its own to map, so it opens on the
+  // collective layer. An explicit tap on "Sen" is always honoured after that.
+  let mapLayer = state.dreams.length ? 'mine' : 'all';
 
   function buildGraph(layer) {
     const g = (layer || mapLayer) === 'all'
@@ -1063,7 +1065,7 @@
           <button type="button" data-pattab="summary" aria-pressed="${patTab === 'summary'}">${esc(t('tabSummary'))}</button>
           <button type="button" data-pattab="map" aria-pressed="${patTab === 'map'}">${esc(t('tabMap'))}</button>
         </div>
-        ${patTab === 'map' ? viewMap(mapLayer === 'mine' ? 'all' : null) : emptySummary}
+        ${patTab === 'map' ? viewMap() : emptySummary}
         ${footer()}`;
     }
 
