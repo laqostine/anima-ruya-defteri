@@ -265,6 +265,7 @@
         <input class="input" id="q" type="search" inputmode="search"
                placeholder="${esc(t('searchPlaceholder'))}" value="${esc(query)}">
       </div>
+      ${hasDemo() ? `<div class="privacy-note" style="margin-bottom:var(--sp-4)">${icon(I.info)}<span>${esc(t('sampleNotice'))}</span></div>` : ''}
       <p class="section__title" aria-live="polite">${esc(t('resultCount', list.length))}</p>
       ${list.length ? `<div class="dream-list">${cards}</div>` : `
         <div class="empty">
@@ -278,6 +279,7 @@
   function dreamCard(d, i) {
     const mood = moodById(d.mood);
     const chips = []
+      .concat(d.demo ? [`<span class="chip chip--demo">${esc(t('sampleBadge'))}</span>`] : [])
       .concat(d.lucid ? [`<span class="chip"><span class="chip__dot" style="color:var(--primary)"></span>${esc(t('lucid'))}</span>`] : [])
       .concat(d.recurring ? [`<span class="chip">${esc(t('recurring'))}</span>`] : [])
       .concat(mood ? [`<span class="chip chip--mood">${esc(L(mood) || mood[state.lang])}</span>`] : [])
@@ -631,6 +633,14 @@
         <p style="color:var(--ink-3);font-size:13px;letter-spacing:.03em;margin-bottom:var(--sp-3)">${esc(c.gloss)}</p>
         <p>${esc(c.body)}</p>
         ${ask ? `<h4>${esc(t('askYourself'))}</h4><blockquote class="quote">${esc(ask)}</blockquote>` : ''}
+        ${(() => {
+          const th = isArch ? window.NORMS.forArchetype(id) : window.NORMS.forSymbol(entry.tr.name);
+          if (!th) return '';
+          return `<h4>${esc(t('collectiveTitle'))}</h4>
+            <p><strong>${esc(th[state.lang] || th.en)}</strong> — ${esc(t('normPrevalence', th.p))}</p>
+            <div class="normbar" aria-hidden="true"><span style="width:${th.p}%"></span></div>
+            <p class="hint" style="margin:0">${esc(window.NORMS.CITATION[state.lang] || window.NORMS.CITATION.en)}</p>`;
+        })()}
         ${count ? `<h4>${esc(t('inYourDreams', count))}</h4>
           <button class="btn btn--ghost btn--block" type="button" data-findlex="${esc(name)}">${esc(t('seeDreams'))}</button>` : ''}
       </div>`;
@@ -678,9 +688,12 @@
      VIEW · Map (constellation + general reading)
      ========================================================= */
   let patTab = 'summary';
+  let mapLayer = 'mine';
 
-  function buildGraph() {
-    const g = window.MAP.build(state.dreams, id => { const a = archById(id); return a ? L(a).name : null; });
+  function buildGraph(layer) {
+    const g = (layer || mapLayer) === 'all'
+      ? window.NORMS.collectiveGraph(state.lang, 16)
+      : window.MAP.build(state.dreams, id => { const a = archById(id); return a ? L(a).name : null; });
     return window.MAP.layout(g, 360, 340);
   }
 
@@ -722,17 +735,21 @@
     const marks = g.nodes.map(d => {
       const r = nodeRadius(d, maxN);
       const isArch = d.kind === 'arch';
-      const c = isArch ? 'var(--chart-1)' : 'var(--chart-3)';
+      const isNorm = d.kind === 'norm';
+      const c = isNorm ? 'var(--chart-2)' : isArch ? 'var(--chart-1)' : 'var(--chart-3)';
       // Shape carries the kind as well as colour — the map must read without hue.
-      const shape = isArch
+      const shape = isNorm
+        ? `<circle r="${r}" fill="${c}" fill-opacity=".20" stroke="${c}" stroke-width="1.8" stroke-dasharray="3 2.6"/>`
+        : isArch
         ? `<circle r="${r}" fill="${c}" fill-opacity=".26" stroke="${c}" stroke-width="1.8"/>`
         : `<rect x="${-r * 0.86}" y="${-r * 0.86}" width="${r * 1.72}" height="${r * 1.72}" rx="${r * 0.3}"
              transform="rotate(45)" fill="${c}" fill-opacity=".22" stroke="${c}" stroke-width="1.8"/>`;
       const label = labelSet.has(d.key)
         ? `<text y="${r + 13}" text-anchor="middle" class="cn__label">${esc(d.label)}</text>` : '';
+      const aria = isNorm ? t('normPrevalence', d.p) : t('inThisMany', d.dreamIds.length);
       return `<g class="cn__node" transform="translate(${d.x.toFixed(1)} ${d.y.toFixed(1)})"
                  tabindex="0" role="button" data-node="${esc(d.kind)}:${esc(d.id)}"
-                 aria-label="${esc(d.label)} — ${esc(t('inThisMany', d.dreamIds.length))}">
+                 aria-label="${esc(d.label)} — ${esc(aria)}">
                 <circle r="${Math.max(r + 10, 22)}" fill="transparent"/>${shape}${label}</g>`;
     }).join('');
 
@@ -754,14 +771,32 @@
           <p class="hint" style="margin:0">${esc(t('readingNeedText'))}</p>
         </div></div>`;
     }
-    if (!res.items.length) return '';
+    // How the dreamer sits against the population — only for themes the
+    // source data actually covers, and never on a single occurrence.
+    const items = res.items.slice();
+    const cmp = window.NORMS.compare(state.dreams, state.lang);
+    const above = cmp.find(c => c.ratio >= 1.6 && c.count >= 2);
+    if (above) items.push({
+      key: 'above', kind: 'norm', ref: above.theme.rank,
+      title: t('anAbove', above.label, Math.round(above.mine), above.norm),
+      text: t('anAboveText'), ask: t('anAboveAsk', above.label)
+    });
+    const common = cmp.filter(c => c !== above).sort((a, b) => b.norm - a.norm)[0];
+    if (common && common.norm >= 50) items.push({
+      key: 'common', kind: 'norm', ref: common.theme.rank,
+      title: t('anCommon', common.label),
+      text: t('anCommonText'), ask: t('anCommonAsk')
+    });
 
-    const cards = res.items.map((it, i) => `
+    if (!items.length) return '';
+
+    const cards = items.map((it, i) => `
       <article class="reading" style="--i:${i}">
         <h3 class="reading__title">${esc(it.title)}</h3>
         ${it.text ? `<p class="reading__text">${esc(it.text)}</p>` : ''}
         ${it.ask ? `<p class="reading__ask">${esc(it.ask)}</p>` : ''}
         ${it.kind === 'arch' ? `<button class="reading__more" type="button" data-openarch="${esc(it.ref)}">${esc(t('seeDetail'))}</button>` : ''}
+        ${it.kind === 'norm' ? `<button class="reading__more" type="button" data-opennorm="${esc(it.ref)}">${esc(t('seeDetail'))}</button>` : ''}
       </article>`).join('');
 
     return `<div class="section">
@@ -789,10 +824,69 @@
       </table></div>`;
   }
 
-  function viewMap() {
-    const g = buildGraph();
+  function normSheet(rank) {
+    const th = window.NORMS.THEMES.find(x => String(x.rank) === String(rank));
+    if (!th) return;
+    const name = th[state.lang] || th.en;
+    const cmp = window.NORMS.compare(state.dreams, state.lang).find(c => c.theme.rank === th.rank);
+    const html = `
+      <div class="prose">
+        <p style="font-family:var(--font-display);font-size:19px;color:var(--ink);margin-bottom:4px">
+          ${esc(t('normPrevalence', th.p))}</p>
+        <p style="color:var(--ink-3);font-size:13px">${esc(t('normRank', th.rank))} · ${esc(t('normGender', th.men, th.women))}</p>
+        <div class="normbar" aria-hidden="true"><span style="width:${th.p}%"></span></div>
+        <h4>${esc(t(cmp ? 'normInYours' : 'normNotInYours', cmp ? cmp.count : 0, state.dreams.length))}</h4>
+        ${cmp ? `<p>${esc(t('anAbove', name, Math.round(cmp.mine), th.p))}</p>` : ''}
+        <h4>${esc(t('normSource'))}</h4>
+        <p style="font-size:13.5px">${esc(window.NORMS.CITATION[state.lang] || window.NORMS.CITATION.en)}</p>
+        <p class="hint" style="margin:0">${esc(t('normCaveat'))}</p>
+      </div>`;
+    openSheet(name, html);
+  }
+
+  function normTable() {
+    const rows = window.NORMS.THEMES.slice(0, 16);
+    return `<div class="section">
+      <h2 class="section__title">${esc(t('collectiveTitle'))}</h2>
+      <table class="dtable">
+        <thead><tr>
+          <th scope="col">${esc(t('mapTableA'))}</th>
+          <th scope="col" class="num">${esc(t('mapTableW'))}</th>
+        </tr></thead>
+        <tbody>${rows.map(th => `<tr>
+          <td>${esc(th[state.lang] || th.en)}</td>
+          <td class="num">%${th.p.toFixed(1)}</td></tr>`).join('')}</tbody>
+      </table>
+      <p class="hint">${esc(t('normCaveat'))}</p>
+    </div>`;
+  }
+
+  function viewMap(force) {
+    const layer = force || mapLayer;
+    const layerSwitch = `
+      <div class="segmented" role="group" aria-label="${esc(t('mapTitle'))}" style="margin-bottom:var(--sp-4)">
+        <button type="button" data-maplayer="mine" aria-pressed="${layer === 'mine'}">${esc(t('layerMine'))}</button>
+        <button type="button" data-maplayer="all" aria-pressed="${layer === 'all'}">${esc(t('layerAll'))}</button>
+      </div>`;
+
+    if (layer === 'all') {
+      const gc = buildGraph('all');
+      return `
+        ${layerSwitch}
+        <div class="section">
+          <p class="hint" style="margin:-4px 0 var(--sp-3)">${esc(t('collectiveSub'))}</p>
+          <div class="cn-wrap">${constellationSVG(gc)}</div>
+          <div class="cn-legend">
+            <span class="cn-key"><i class="cn-key__norm"></i>${esc(t('collectiveTitle'))}</span>
+          </div>
+          <p class="hint" style="margin-top:var(--sp-3)">${esc(window.NORMS.CITATION[state.lang] || window.NORMS.CITATION.en)}</p>
+        </div>
+        ${normTable()}`;
+    }
+
+    const g = buildGraph('mine');
     if (!g.nodes.length) {
-      return `<div class="empty">
+      return `${layerSwitch}<div class="empty">
         <div class="empty__art">${icon('<circle cx="7" cy="7" r="3"/><circle cx="18" cy="10" r="2.5"/><circle cx="11" cy="18" r="2.5"/><path d="M9.6 8.4 15.5 9.6M8.4 9.7l1.9 5.9"/>')}</div>
         <h2 class="empty__title">${esc(t('mapEmptyTitle'))}</h2>
         <p class="empty__text">${esc(t('mapEmptyText'))}</p>
@@ -800,6 +894,7 @@
       </div>`;
     }
     return `
+      ${layerSwitch}
       <div class="section">
         <p class="hint" style="margin:-4px 0 var(--sp-3)">${esc(t('mapSub'))}</p>
         <div class="cn-wrap">${constellationSVG(g)}</div>
@@ -818,15 +913,29 @@
     // not in the mount handler that runs afterwards.
     if (arg === 'map' || arg === 'summary') patTab = arg;
     const total = state.dreams.length;
+
+    // An empty notebook still has the collective map to show — that is the
+    // whole point of it, so the empty state replaces the summary only.
     if (total < 1) {
-      return `
-        <div class="page-head"><h1 class="page-title">${esc(t('patternsTitle'))}</h1></div>
+      const emptySummary = `
         <div class="empty">
           <div class="empty__art">${icon('<path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/>')}</div>
           <h2 class="empty__title">${esc(t('patternsEmptyTitle'))}</h2>
           <p class="empty__text">${esc(t('patternsEmptyText'))}</p>
           <a class="btn btn--primary" href="#/new">${icon(I.plus)}${esc(t('emptyCta'))}</a>
         </div>`;
+        // Force the collective layer for this render only — do not stick it,
+        // or the user's own map stays hidden once they write their first dream.
+      return `
+        <div class="page-head">
+          <h1 class="page-title">${esc(patTab === 'map' ? t('mapTitle') : t('patternsTitle'))}</h1>
+        </div>
+        <div class="segmented" role="group" aria-label="${esc(t('patternsTitle'))}" style="margin-bottom:var(--sp-5)">
+          <button type="button" data-pattab="summary" aria-pressed="${patTab === 'summary'}">${esc(t('tabSummary'))}</button>
+          <button type="button" data-pattab="map" aria-pressed="${patTab === 'map'}">${esc(t('tabMap'))}</button>
+        </div>
+        ${patTab === 'map' ? viewMap('all') : emptySummary}
+        ${footer()}`;
     }
 
     const now = Date.now();
@@ -932,6 +1041,16 @@
       </div>
       <hr class="divider">
       <div class="field">
+        <p class="label">${esc(t('sampleTitle'))}</p>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
+          ${hasDemo()
+            ? `<button class="btn btn--ghost btn--block" type="button" id="doSampleClear">${esc(t('sampleClear'))}</button>`
+            : `<button class="btn btn--ghost btn--block" type="button" id="doSampleLoad">${esc(t('sampleLoad'))}</button>`}
+        </div>
+        <p class="hint">${esc(t('sampleHint'))}</p>
+      </div>
+      <hr class="divider">
+      <div class="field">
         <p class="label">${esc(t('dataTitle'))}</p>
         <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
           <button class="btn btn--ghost btn--block" type="button" id="doExport">${esc(t('exportBtn'))}</button>
@@ -957,6 +1076,9 @@
         if (state.lang === b.dataset.lang) return;
         state.lang = b.dataset.lang; save(); applyStaticStrings(); closeSheet(); render();
       }));
+      const sl = $('#doSampleLoad', body), sc = $('#doSampleClear', body);
+      if (sl) sl.addEventListener('click', loadSample);
+      if (sc) sc.addEventListener('click', clearSample);
       $('#doExport', body).addEventListener('click', doExport);
       $('#doImport', body).addEventListener('click', () => $('#fileIn', body).click());
       $('#fileIn', body).addEventListener('change', e => doImport(e.target.files[0]));
@@ -964,8 +1086,27 @@
     });
   }
 
+  function hasDemo() { return state.dreams.some(d => d.demo); }
+
+  function loadSample() {
+    const add = window.NORMS.sampleDreams(state.lang, Date.now())
+      .filter(d => !state.dreams.some(x => x.id === d.id));
+    state.dreams = state.dreams.concat(add);
+    save(); closeSheet(); render();
+    toast(t('sampleLoaded', add.length));
+  }
+
+  function clearSample() {
+    const before = state.dreams.length;
+    state.dreams = state.dreams.filter(d => !d.demo);   // real entries are never demo:true
+    if (state.dreams.length === before) return closeSheet();
+    save(); closeSheet(); render();
+    toast(t('sampleCleared'));
+  }
+
   function doExport() {
-    const payload = { app: 'anima', version: 1, exported: new Date().toISOString(), dreams: state.dreams };
+    const payload = { app: 'anima', version: 1, exported: new Date().toISOString(),
+      dreams: state.dreams.filter(d => !d.demo) };   // a backup holds only real entries
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1086,8 +1227,15 @@
         if (location.hash !== target) location.hash = target; else render();
       }));
 
+      $$('[data-maplayer]', root).forEach(b => b.addEventListener('click', () => {
+        mapLayer = b.dataset.maplayer; render();
+      }));
+      $$('[data-opennorm]', root).forEach(b =>
+        b.addEventListener('click', () => normSheet(b.dataset.opennorm)));
+
       const open = key => {
         const [kind, id] = key.split(':');
+        if (kind === 'norm') return normSheet(id);
         if (kind === 'arch') return openLexEntry('arch', id);
         const s = symByName(id);
         if (s) openLexEntry('sym', s.id);

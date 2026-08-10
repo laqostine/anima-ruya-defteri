@@ -1,12 +1,14 @@
 /* Anima — offline shell.
    The notebook must open at 4am on a phone with no signal. */
-const CACHE = 'anima-v2';
+const CACHE = 'anima-v3';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './assets/css/style.css',
   './assets/js/lexicon.js',
+  './assets/js/sample.js',
+  './assets/js/norms.js',
   './assets/js/i18n.js',
   './assets/js/constellation.js',
   './assets/js/app.js',

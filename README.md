@@ -43,6 +43,26 @@ Below it, **Genel okuma** derives observations from the graph — a dominant arc
 
 A `dtable` of the strongest bonds sits underneath as the accessible, non-visual reading of the same data.
 
+
+## Collective norms — where the numbers come from
+
+`Desenler › Harita` has two layers. **Sen** is your own co-occurrence graph. **Kolektif** is the typical dream landscape drawn from published prevalence data:
+
+> Nielsen, T. A., Zadra, A. L., Simard, V., Saucier, S., Stenstrom, P., Smith, C., & Kuiken, D. (2003). *The Typical Dreams of Canadian University Students.* Dreaming, 13(4), 211–235. n = 1181, Typical Dreams Questionnaire, 55 items.
+
+All 55 themes and their prevalences live in `assets/js/norms.js`, transcribed from the paper's Table 2, with each theme mapped onto Anima's own lexicon where a defensible mapping exists. The collective layer means an empty notebook still opens onto something true rather than a blank canvas, and each of your symbols carries its population prevalence in the lexicon sheet.
+
+**The app states the caveat wherever the numbers appear**: `p` is *lifetime* prevalence — the share of people who report ever having had that dream, not the share of dreams — and the sample is Canadian undergraduates, not Turkish adults. A reading only calls a theme "standing out" when your rate runs ≥1.6× the norm on at least two occurrences.
+
+## Sample notebook
+
+Settings → **Örnek defter** loads ten example dreams written to exercise the most prevalent themes, for trying the app or demonstrating it on a table. They are honestly marked, not disguised as records:
+
+- every entry carries `demo: true` and shows an "Örnek" badge
+- a standing notice sits above the dream list while any are loaded
+- one tap removes exactly the samples; real entries are matched by the same flag and never touched
+- **backups exclude them** — an export contains only real entries
+
 ## Accessibility
 
 Verified on the live build: contrast on the night theme is 17.0 : 1 (body), 9.1 : 1 (secondary), 4.7 : 1 (muted) — all above WCAG AA. Every control is ≥44px, focus rings are visible, the sheet traps focus and restores it on close, toasts announce via `aria-live`, and `prefers-reduced-motion` disables all animation. No horizontal scroll at 320px.
@@ -55,6 +75,8 @@ assets/css/style.css    tokens (both themes) and every component
 assets/js/lexicon.js    archetypes, symbols, moods, amplification prompts (tr/en)
 assets/js/i18n.js       UI strings + long-form guide content
 assets/js/constellation.js  graph build, force layout, reading rules (pure, no DOM)
+assets/js/norms.js      Nielsen et al. (2003) prevalence table + comparison
+assets/js/sample.js     the ten sample dreams (tr/en)
 assets/js/app.js        store, hash router, views, capture flow
 sw.js                   offline shell
 qr/                     QR code + printable A6 card

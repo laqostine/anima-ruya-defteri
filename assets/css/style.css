@@ -531,6 +531,22 @@ a { color: inherit; text-decoration: none; }
   border: 1.6px solid var(--chart-3); background: color-mix(in srgb, var(--chart-3) 22%, transparent);
 }
 .cn-key__link { width: 16px; height: 2px; border-radius: 1px; background: var(--ink-3); opacity: .6; }
+.cn-key__norm {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1.6px dashed var(--chart-2); background: color-mix(in srgb, var(--chart-2) 20%, transparent);
+}
+
+/* Prevalence meter — one value against a 0–100% track */
+.normbar {
+  height: 6px; border-radius: 3px; background: var(--grid);
+  overflow: hidden; margin: var(--sp-2) 0 var(--sp-3);
+}
+.normbar span { display: block; height: 100%; border-radius: 3px; background: var(--chart-2); }
+
+.chip--demo {
+  background: transparent; color: var(--ink-3);
+  border-style: dashed; border-color: var(--border-str);
+}
 
 /* ---------- 12c. Reading cards ---------- */
 .readings { display: flex; flex-direction: column; gap: var(--sp-3); }
