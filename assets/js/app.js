@@ -162,6 +162,7 @@
     root.hidden = false;
     document.body.style.overflow = 'hidden';
     if (onMount) onMount($('#sheetBody'));
+    syncSegmented($('#sheetBody'));
     const first = $('#sheetBody').querySelector('button, [href], input, textarea, select') || $('#sheetClose');
     first.focus({ preventScroll: true });
     document.addEventListener('keydown', sheetKeys);
@@ -189,6 +190,35 @@
   $('#scrim').addEventListener('click', closeSheet);
   $('#sheetClose').addEventListener('click', closeSheet);
 
+  /* The grip promised a drag; make it real. Pulling the sheet down past a
+     third of its height dismisses it, anything less springs back. */
+  (function sheetDrag() {
+    const handle = $('#sheetHandle'), sheet = $('#sheet');
+    if (!handle || !sheet) return;
+    let y0 = 0, dy = 0, active = false;
+    handle.addEventListener('pointerdown', e => {
+      if (window.innerWidth >= 640) return;      // desktop shows a centred dialog
+      active = true; y0 = e.clientY; dy = 0;
+      sheet.classList.add('is-dragging');
+      handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!active) return;
+      dy = Math.max(0, e.clientY - y0);
+      sheet.style.transform = `translateY(${dy}px)`;
+      e.preventDefault();
+    }, { passive: false });
+    const end = () => {
+      if (!active) return;
+      active = false;
+      sheet.classList.remove('is-dragging');
+      sheet.style.transform = '';
+      if (dy > sheet.offsetHeight / 3) closeSheet();
+    };
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  })();
+
   /* ---------------- router ---------------- */
   function route() {
     const raw = location.hash.replace(/^#\/?/, '') || 'dreams';
@@ -197,8 +227,20 @@
   }
   function go(hash) { location.hash = hash; }
 
+  /** Position every segmented control's sliding indicator. */
+  function syncSegmented(root) {
+    $$('.segmented', root).forEach(seg => {
+      const btns = $$('button', seg);
+      if (!btns.length) return;
+      const i = btns.findIndex(b => b.getAttribute('aria-pressed') === 'true');
+      seg.style.setProperty('--seg-n', btns.length);
+      seg.style.setProperty('--seg-i', Math.max(i, 0));
+    });
+  }
+
   function render() {
     closeSheet();
+    destroyGlobe();
     const r = route();
     const main = $('#main');
     const views = {
@@ -208,6 +250,7 @@
     const fn = views[r.name] || viewDreams;
     main.innerHTML = `<div class="view">${fn(r.arg)}</div>`;
     (mounts[r.name] || function () {})(main, r.arg);
+    syncSegmented(main);
 
     $$('.tab').forEach(tab => {
       const on = tab.dataset.tab === r.name
@@ -858,41 +901,111 @@
   let atlasTheme = 'chased';
 
   const ATLAS_DEPTH = {
-    full:     { c: 'var(--chart-1)', k: 'atlasFull' },
-    partial:  { c: 'var(--chart-2)', k: 'atlasPartial' },
-    historic: { c: 'var(--chart-3)', k: 'atlasHistoric' },
-    none:     { c: 'var(--ink-3)',   k: 'atlasNone' }
+    full:     { c: 'var(--chart-1)', k: 'atlasFull', raw: cs => cs.getPropertyValue('--chart-1').trim() },
+    partial:  { c: 'var(--chart-2)', k: 'atlasPartial', raw: cs => cs.getPropertyValue('--chart-2').trim() },
+    historic: { c: 'var(--chart-3)', k: 'atlasHistoric', raw: cs => cs.getPropertyValue('--chart-3').trim() },
+    none:     { c: 'var(--accent)',  k: 'atlasNone', raw: cs => cs.getPropertyValue('--accent').trim() }
   };
 
-  function worldSVG() {
-    const W = window.WORLD.w, H = window.WORLD.h;
-    const marks = window.ATLAS.COUNTRIES.map(c => {
+  /* The globe paints to canvas for speed and bloom; the country markers stay
+     real HTML buttons positioned over it each frame, so they keep focus rings,
+     labels and 44px hit areas that a canvas could never offer. */
+  let globe = null, globeIO = null;
+
+  function globeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const v = n => cs.getPropertyValue(n).trim();
+    const dark = document.documentElement.dataset.theme !== 'light';
+    return {
+      // The globe stays a night object in both themes — an instrument resting
+      // on the page, not an inverted map.
+      atmoIn:  dark ? 'rgba(139,92,246,.20)' : 'rgba(91,58,168,.16)',
+      atmoOut: 'rgba(0,0,0,0)',
+      faceLit: dark ? '#1b2144' : '#232a52',
+      face:    dark ? '#121735' : '#171d3c',
+      faceEdge: dark ? '#070a18' : '#0b0f22',
+      grid:    dark ? 'rgba(120,190,255,.16)' : 'rgba(150,200,255,.14)',
+      land:    dark ? 'rgba(150,225,255,.90)' : 'rgba(160,230,255,.85)',
+      landGlow: dark ? 'rgba(60,170,255,.30)' : 'rgba(70,160,255,.26)',
+      arc:     dark ? 'rgba(201,182,253,.34)' : 'rgba(180,160,250,.30)',
+      _chart1: v('--chart-1'), _chart2: v('--chart-2'), _chart3: v('--chart-3'), _accent: v('--accent')
+    };
+  }
+
+  function globeMarkers() {
+    return window.ATLAS.COUNTRIES.map(c => {
       const at = window.WORLD.at[c.iso];
-      if (!at) return '';
-      const d = ATLAS_DEPTH[c.depth];
-      const top = c.themes.length ? c.themes[0][1] : 0;
-      const r = c.depth === 'none' ? 7 : 6 + Math.round(top / 12);
+      if (!at) return null;
+      const cs = getComputedStyle(document.documentElement);
+      const col = c.depth === 'none' ? cs.getPropertyValue('--accent').trim()
+                : ATLAS_DEPTH[c.depth].raw(cs);
+      return { id: c.iso, lon: at[0], lat: at[1], color: col, empty: c.depth === 'none' };
+    }).filter(Boolean);
+  }
+
+  function worldGlobe() {
+    const pins = window.ATLAS.COUNTRIES.map(c => {
+      if (!window.WORLD.at[c.iso]) return '';
       const empty = c.depth === 'none';
       const name = c[state.lang] || c.en;
-      // The empty marker is the point of this map, not a leftover — it gets a
-      // name and a ring bright enough to read against land.
-      return `<g class="atlas__pin${empty ? ' is-empty' : ''}" transform="translate(${at[0]} ${at[1]})"
-                 tabindex="0" role="button" data-country="${esc(c.iso)}"
-                 aria-label="${esc(name)} — ${esc(empty ? t('atlasNoStudy') : t('atlasThemes', c.themes.length))}">
-                <circle r="24" fill="transparent"/>
-                ${empty
-                  ? `<circle class="atlas__ring" r="${r + 5}"/>
-                     <circle r="${r}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3.2 2.6"/>
-                     <text class="atlas__pinlabel" y="${r + 15}" text-anchor="middle">${esc(name)}</text>`
-                  : `<circle class="atlas__halo" r="${r + 7}" fill="${d.c}" opacity=".14"/>
-                     <circle r="${r}" fill="${d.c}" fill-opacity=".62" stroke="${d.c}" stroke-width="1.4"/>`}
-              </g>`;
+      return `<button class="globe__pin${empty ? ' is-empty' : ''}" type="button"
+                data-country="${esc(c.iso)}" data-pin="${esc(c.iso)}" hidden
+                aria-label="${esc(name)} — ${esc(empty ? t('atlasNoStudy') : t('atlasThemes', c.themes.length))}">
+                <span class="globe__pinlabel">${esc(name)}</span>
+              </button>`;
     }).join('');
+    return `
+      <div class="globe-wrap">
+        <canvas class="globe" id="globeCanvas" aria-hidden="true"></canvas>
+        <div class="globe__pins" id="globePins">${pins}</div>
+        <p class="globe__hint">${esc(t('globeHint'))}</p>
+      </div>`;
+  }
 
-    return `<svg class="atlas" viewBox="0 0 ${W} ${H}" role="img"
-      aria-label="${esc(t('atlasTitle'))}">
-      <path class="atlas__land" d="${window.WORLD.land}"/>
-      ${marks}</svg>`;
+  function mountGlobe(root) {
+    const canvas = $('#globeCanvas', root);
+    if (!canvas || !window.Globe || !window.WORLD.rings) return;
+    const pinHost = $('#globePins', root);
+    const pinEls = new Map($$('[data-pin]', pinHost).map(el => [el.dataset.pin, el]));
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    globe = window.Globe.create(canvas, {
+      rings: window.WORLD.rings,
+      markers: globeMarkers(),
+      colors: globeColors(),
+      reduced,
+      onFrame: pos => {
+        pos.forEach(p => {
+          const el = pinEls.get(p.id);
+          if (!el) return;
+          if (!p.visible) { if (!el.hidden) el.hidden = true; return; }
+          if (el.hidden) el.hidden = false;
+          el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+          el.style.opacity = (0.35 + p.depth * 0.65).toFixed(2);
+        });
+      }
+    });
+
+    // The hint has done its job the moment the user drags.
+    const wrap = canvas.closest('.globe-wrap');
+    canvas.addEventListener('pointerdown', () => wrap && wrap.classList.add('is-touched'), { once: true });
+
+    globe.resize();
+    globe.draw();
+    // Only spend frames while the globe is actually on screen.
+    globeIO = new IntersectionObserver(es => {
+      es.forEach(e => e.isIntersecting ? globe.start() : globe.stop());
+    }, { threshold: 0.05 });
+    globeIO.observe(canvas);
+
+    const onResize = () => { globe.resize(); globe.draw(); };
+    window.addEventListener('resize', onResize);
+    globe._cleanup = () => window.removeEventListener('resize', onResize);
+  }
+
+  function destroyGlobe() {
+    if (globeIO) { globeIO.disconnect(); globeIO = null; }
+    if (globe) { globe._cleanup && globe._cleanup(); globe.destroy(); globe = null; }
   }
 
   function atlasCompare() {
@@ -934,7 +1047,7 @@
     return `
       <div class="section">
         <p class="hint" style="margin:-4px 0 var(--sp-3)">${esc(t('atlasSub'))}</p>
-        <div class="atlas-wrap">${worldSVG()}</div>
+        ${worldGlobe()}
         <div class="cn-legend">${legend}</div>
       </div>
       ${atlasCompare()}
@@ -1202,6 +1315,8 @@
       $$('[data-theme]', body).forEach(b => b.addEventListener('click', () => {
         state.theme = b.dataset.theme; save(); applyTheme();
         $$('[data-theme]', body).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        syncSegmented(body);
+        if (globe) globe.setColors(globeColors());
       }));
       $$('[data-lang]', body).forEach(b => b.addEventListener('click', () => {
         if (state.lang === b.dataset.lang) return;
@@ -1363,6 +1478,8 @@
       }));
       $$('[data-opennorm]', root).forEach(b =>
         b.addEventListener('click', () => normSheet(b.dataset.opennorm)));
+
+      mountGlobe(root);
 
       const openCountry = el => countrySheet(el.dataset.country);
       $$('[data-country]', root).forEach(el => {

@@ -178,6 +178,7 @@ window.STRINGS = {
     atlasPickTheme: 'Tema seç',
     atlasTrCallout: 'Türkiye haritada boş',
     atlasTrText: 'Türkçe örneklemle yapılmış, karşılaştırılabilir bir yaşam boyu yaygınlık çalışması bulamadık. Bu boşluğu doldurmak Jungian Studies İstanbul için gerçek bir araştırma fırsatı.',
+    globeHint: 'Döndürmek için sürükle',
     atlasSourceNote: 'Tüm oranlar yayımlanmış çalışmalardan; ülkeler arası farklar örneklem, dönem ve ölçek farklarını da yansıtır.',
 
     /* about */
@@ -372,6 +373,7 @@ window.STRINGS = {
     atlasPickTheme: 'Choose a theme',
     atlasTrCallout: 'Turkey is blank on this map',
     atlasTrText: 'We could not find a comparable lifetime-prevalence study on a Turkish sample. Filling that gap is a genuine research opportunity for Jungian Studies İstanbul.',
+    globeHint: 'Drag to rotate',
     atlasSourceNote: 'All figures come from published studies; differences between countries also reflect differences in sample, period and instrument.',
 
     aboutTitle: 'Guide',

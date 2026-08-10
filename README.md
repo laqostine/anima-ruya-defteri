@@ -59,7 +59,15 @@ All 55 themes and their prevalences live in `assets/js/norms.js`, transcribed fr
 
 `Desenler › Harita` has three layers: **Sen** (your own graph), **Kolektif** (typical-dream prevalence as a constellation), **Dünya** (a real world map of where that data exists).
 
-The map geometry is generated, not hand-drawn: `scripts/mkworld.js` pulls Natural Earth 110m from world-atlas, drops Antarctica, projects with Natural Earth I into an 800×400 viewBox and emits `assets/js/worldmap.js` (~10 KB gzipped, zero runtime dependencies). Regenerate rather than hand-edit.
+The Dünya layer is a **rotating orthographic globe** — real 3D, not a CSS trick. `assets/js/globe.js` projects raw lon/lat at runtime (`cos c > 0` culls the far hemisphere), so countries genuinely disappear around the limb and come back. It drags with inertia, drifts slowly when idle, and **opens centred on İstanbul** — the studio's own longitude.
+
+Rendering is a deliberate hybrid: **canvas** paints the sphere, graticule, glowing coastlines and great-circle arcs (`shadowBlur` gives cheap bloom that SVG filters cannot match when animated), while the country markers stay **real HTML buttons** repositioned every frame. That keeps focus rings, `aria-label`s and 44px hit areas that a canvas could never provide — and they hide themselves when their point rotates out of view.
+
+Geometry is generated, not hand-drawn: `scripts/mkworld.js` pulls Natural Earth 110m, drops Antarctica, quantises to 0.1° and decimates to ~2,350 points, emitting `assets/js/worldmap.js` (~10 KB gzipped, zero runtime dependencies). Regenerate rather than hand-edit.
+
+**The neon is confined to the observatory.** Rüyalar, Yeni and Rehber stay papery, serif and quiet. The map is the one screen where the app looks outward at the collective, so it is the one screen that looks like an instrument — and that contrast is what gives it charge. In light mode the globe stays a night object resting on a cream page rather than inverting into something garish.
+
+Motion respects `prefers-reduced-motion` completely: no auto-rotation, no inertia, no pulse — static but still draggable. The render loop is gated by an `IntersectionObserver` and torn down on navigation, so it never burns frames off-screen.
 
 Markers sit on real projected centroids and are graded by how much a study actually documents:
 
@@ -99,7 +107,8 @@ assets/js/constellation.js  graph build, force layout, reading rules (pure, no D
 assets/js/norms.js      Nielsen et al. (2003) prevalence table + comparison
 assets/js/sample.js     the ten sample dreams (tr/en)
 assets/js/atlas.js      per-country studies (and Turkey's documented absence)
-assets/js/worldmap.js   GENERATED world geometry — see scripts/mkworld.js
+assets/js/worldmap.js   GENERATED lon/lat rings — see scripts/mkworld.js
+assets/js/globe.js      orthographic globe: projection, render, drag (no app state)
 assets/js/app.js        store, hash router, views, capture flow
 sw.js                   offline shell
 qr/                     QR code + printable A6 card
