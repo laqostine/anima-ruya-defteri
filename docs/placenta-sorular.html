@@ -1,0 +1,370 @@
+<title>Placenta × Rüya Defteri — Soru Listesi</title>
+<style>
+:root {
+  --paper:     #F2EEE6;
+  --surface:   #FFFCF6;
+  --surface-2: #E9E2D5;
+  --rule:      rgba(30, 26, 21, .13);
+  --rule-2:    rgba(30, 26, 21, .28);
+
+  --ink:       #1D1913;
+  --ink-2:     #565047;
+  --ink-3:     #877F71;
+
+  --deep:      #4B3A6B;
+  --deep-sub:  rgba(75, 58, 107, .10);
+  --clay:      #9C4A2F;
+  --clay-sub:  rgba(156, 74, 47, .10);
+  --moss:      #4E6146;
+  --moss-sub:  rgba(78, 97, 70, .11);
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --measure: 36rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:     #0F0D14;
+    --surface:   #17141F;
+    --surface-2: #201C2B;
+    --rule:      rgba(255, 255, 255, .11);
+    --rule-2:    rgba(255, 255, 255, .24);
+    --ink:       #F2EEE6;
+    --ink-2:     #B5AEC2;
+    --ink-3:     #7E7791;
+    --deep:      #BFA8E8;
+    --deep-sub:  rgba(191, 168, 232, .13);
+    --clay:      #E39070;
+    --clay-sub:  rgba(227, 144, 112, .12);
+    --moss:      #9DBE8E;
+    --moss-sub:  rgba(157, 190, 142, .12);
+  }
+}
+:root[data-theme="dark"] {
+  --paper:     #0F0D14;
+  --surface:   #17141F;
+  --surface-2: #201C2B;
+  --rule:      rgba(255, 255, 255, .11);
+  --rule-2:    rgba(255, 255, 255, .24);
+  --ink:       #F2EEE6;
+  --ink-2:     #B5AEC2;
+  --ink-3:     #7E7791;
+  --deep:      #BFA8E8;
+  --deep-sub:  rgba(191, 168, 232, .13);
+  --clay:      #E39070;
+  --clay-sub:  rgba(227, 144, 112, .12);
+  --moss:      #9DBE8E;
+  --moss-sub:  rgba(157, 190, 142, .12);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--sans); font-size: 17px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: var(--measure); margin-inline: auto;
+  padding: 3rem 1.25rem 5rem;
+  display: flex; flex-direction: column; gap: 3rem;
+}
+
+.mast { display: flex; flex-direction: column; gap: .9rem; }
+.mast__eyebrow {
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3); font-weight: 600;
+}
+.mast h1 {
+  font-family: var(--serif); font-size: clamp(2rem, 6.5vw, 2.7rem);
+  line-height: 1.1; font-weight: 600; margin: 0; letter-spacing: -.015em;
+  text-wrap: balance;
+}
+.mast__deck {
+  font-family: var(--serif); font-size: 1.15rem; line-height: 1.5;
+  color: var(--ink-2); margin: 0;
+}
+
+.frame {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 2px; padding: 1.35rem;
+  display: flex; flex-direction: column; gap: .8rem;
+}
+.frame__tag {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 600; color: var(--clay);
+}
+.frame p { margin: 0; }
+.frame--find { background: var(--clay-sub); border-color: color-mix(in srgb, var(--clay) 30%, transparent); }
+
+/* Blocks are lettered because they are decision gates in order, not a menu */
+.block { display: flex; flex-direction: column; gap: 1.1rem; }
+.block__head { display: flex; flex-direction: column; gap: .3rem; }
+.block__key {
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .1em;
+  font-weight: 700; color: var(--deep);
+}
+.block h2 {
+  font-family: var(--serif); font-size: clamp(1.35rem, 4.4vw, 1.7rem);
+  line-height: 1.2; margin: 0; font-weight: 600; letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.block__why {
+  font-size: .9rem; color: var(--ink-2); margin: 0;
+  padding-left: .8rem; border-left: 2px solid var(--rule-2);
+}
+
+.qs { display: flex; flex-direction: column; gap: .9rem; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.q {
+  display: grid; grid-template-columns: 2.3rem 1fr; gap: .1rem .7rem;
+  align-items: start;
+  padding-bottom: .9rem; border-bottom: 1px solid var(--rule);
+}
+.qs > .q:last-child { border-bottom: 0; padding-bottom: 0; }
+.q__n {
+  font-family: var(--mono); font-size: .78rem; font-weight: 700;
+  color: var(--ink-3); padding-top: .18rem;
+  font-variant-numeric: tabular-nums;
+}
+.q__text { font-size: 1rem; line-height: 1.5; margin: 0; }
+.q__decides {
+  grid-column: 2; font-size: .84rem; color: var(--ink-3);
+  line-height: 1.45; margin: .3rem 0 0;
+}
+.q__decides b { color: var(--ink-2); font-weight: 600; }
+
+.gate {
+  border: 1px solid color-mix(in srgb, var(--moss) 38%, transparent);
+  background: var(--moss-sub); border-radius: 2px; padding: 1.35rem;
+  display: flex; flex-direction: column; gap: .7rem;
+}
+.gate__tag {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 600; color: var(--moss);
+}
+.gate p { margin: 0; }
+.gate strong { font-weight: 700; }
+
+.closing {
+  border-top: 2px solid var(--ink); padding-top: 1.35rem;
+  display: flex; flex-direction: column; gap: .8rem;
+}
+.closing__q {
+  font-family: var(--serif); font-size: 1.25rem; line-height: 1.4; margin: 0;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+strong { font-weight: 700; }
+em { font-style: italic; }
+a { color: var(--deep); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--deep); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="page">
+
+  <header class="mast">
+    <div class="mast__eyebrow">Keşif · Placenta × Jungian Studies İstanbul</div>
+    <h1>Rüya defterini yapmadan önce sormamız gerekenler</h1>
+    <p class="mast__deck">Aşağıdaki soruların hepsi bir şeye karar veriyor. Cevabı ürünü değiştirmeyecek hiçbir soru listeye alınmadı.</p>
+  </header>
+
+  <div class="frame frame--find">
+    <div class="frame__tag">Önce bir düzeltme</div>
+    <p>İlk analizimde “ortada ödeme isteği kanıtı yok” demiştim. <strong>Yanlıştı.</strong> Placenta zaten <em>I Saw Me Last Night — Jungian Dreamwork Cards</em>'ı ₺1.800 / €33'e satıyor. Bu bir dürtüsel alım fiyatı değil; insanlar Jungiyen rüya çalışmasına <strong>düşünerek para ödüyor</strong>.</p>
+    <p>Bu, sorunun yerini değiştiriyor. Artık “insanlar öder mi?” diye sormuyoruz. Sorduğumuz şu: <strong>uygulama, zaten satılan destenin dijital tamamlayıcısı mı, yoksa ondan bağımsız ayrı bir ürün mü?</strong> Birincisi güçlü, ikincisi zayıf — ve aşağıdaki sorular hangisi olduğunu söyleyecek.</p>
+  </div>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">A</div>
+      <h2>Elimizde zaten ne var</h2>
+    </div>
+    <p class="block__why">Yeni bir kitle aramadan önce mevcut kitleyi ölçmek gerekiyor. B2C mobil uygulamaların çoğu, sıfırdan kullanıcı edinmeye çalıştığı için ölüyor.</p>
+    <ul class="qs">
+      <li class="q"><span class="q__n">A1</span>
+        <p class="q__text">Dreamwork Cards bugüne kaç adet satıldı? Aylık kaç satıyor, ve alıcıların ne kadarı Türkiye dışından?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Uygulamanın sıfır maliyetli bir başlangıç kitlesi var mı, yok mu. 50 satış ile 5.000 satış tamamen farklı iki ürün stratejisi demek.</p>
+      </li>
+      <li class="q"><span class="q__n">A2</span>
+        <p class="q__text">Elinizde e-posta listesi / müşteri veritabanı var mı? Kaç kişi, ve pazarlama izni alınmış mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Lansmanın ilk gününde kaç kişiye ulaşabileceğimiz. Ön satış testinin mümkün olup olmadığı da buna bağlı.</p>
+      </li>
+      <li class="q"><span class="q__n">A3</span>
+        <p class="q__text">Desteyi alan insanlar onu gerçekten kullanıyor mu? Geri dönüş, yorum, sosyal medya paylaşımı, tekrar alım var mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Satın alma ile kullanım arasındaki uçurumu. Eğer deste rafta duruyorsa, uygulama da rafta durur — ve asıl çözmemiz gereken problem “kullanıma sokmak” olur.</p>
+      </li>
+      <li class="q"><span class="q__n">A4</span>
+        <p class="q__text">“Experiences” ve “Treatments” kategorilerinde tam olarak ne satılıyor? Bunlar yüz yüze mi, çevrimiçi mi, kim veriyor?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Uygulamanın bir hizmete köprü olup olamayacağını. Dijital ürünün en sağlam iş modeli çoğu zaman “insan hizmetine giden yol” olmaktır.</p>
+      </li>
+      <li class="q"><span class="q__n">A5</span>
+        <p class="q__text">Placenta ile Jungian Studies İstanbul arasındaki ilişki tam olarak nedir? Aynı ekip mi, ortaklık mı, ayrı kurumlar mı? Bu ürün hangisinin adıyla çıkacak?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Marka, güven kaynağı, ve kimin kitlesine dağıtım yapacağımız. Ayrıca kimin karar verdiğini.</p>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">B</div>
+      <h2>Uygulama neyin devamı</h2>
+    </div>
+    <p class="block__why">En kritik blok. Uygulamanın destenin tamamlayıcısı mı yoksa ayrı bir ürün mü olduğu, geri kalan her şeyi belirliyor.</p>
+    <ul class="qs">
+      <li class="q"><span class="q__n">B1</span>
+        <p class="q__text">Deste tam olarak nasıl kullanılıyor? Kullanıcı bir kart çekiyor mu, rüyasına göre mi seçiyor, kaç kart var, üstünde ne yazıyor?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Uygulamanın destenin hangi adımını devraldığı. Fiziksel ritüeli bozmadan tamamlamak istiyoruz, kopyalamak değil.</p>
+      </li>
+      <li class="q"><span class="q__n">B2</span>
+        <p class="q__text">Deste alan biri uygulamayı ücretsiz mi alsın? (Kutunun içinde QR / kod)</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Fiziksel ürünün dijital edinim kanalına dönüşüp dönüşmeyeceğini. Bu, sıfır maliyetli en güçlü büyüme döngüsü olabilir.</p>
+      </li>
+      <li class="q"><span class="q__n">B3</span>
+        <p class="q__text">Uygulamanın <em>olmasa da olur</em> dediğiniz kısmı hangisi? Bir özelliği çıkarmak zorunda kalsak hangisinden vazgeçersiniz?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Gerçek öncelik sırasını. “Hepsi önemli” cevabı, önceliğin henüz belirlenmediği anlamına gelir.</p>
+      </li>
+      <li class="q"><span class="q__n">B4</span>
+        <p class="q__text">Yapay zekâ rüya yorumu istiyor musunuz? Net cevap gerekiyor: <strong>evet</strong> mi <strong>hayır</strong> mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Ürünün ruhunu. Jung'un yöntemi kullanıcının kendi çağrışımını önceler; makinenin “bu rüya şu demek” demesi bu yöntemin tam tersidir. Ayrıca yorum üreten bir uygulama klinik sorumluluk alanına girer. Benim önerim <strong>hayır</strong> — ama bu sizin kararınız ve şimdi verilmeli, sonra değil.</p>
+      </li>
+      <li class="q"><span class="q__n">B5</span>
+        <p class="q__text">Uygulama Türkçe mi, İngilizce mi, ikisi mi? Öncelik hangisi?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Sembol sözlüğünün ve tüm içeriğin kapsamını. Placenta zaten €/₺ ile satıyor, yani cevap muhtemelen “ikisi” — ama hangisinin önce mükemmelleşeceği farklı bir soru.</p>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">C</div>
+      <h2>İnsanlar gerçekte ne yaşıyor</h2>
+    </div>
+    <p class="block__why">Bu beş sorunun cevabı sizde değil, müşterilerinizde. Ama kimlerle konuşacağımızı siz biliyorsunuz. Hedef: 20 görüşme.</p>
+    <ul class="qs">
+      <li class="q"><span class="q__n">C1</span>
+        <p class="q__text">Konuşabileceğimiz 20 kişiyi bize açabilir misiniz? (Deste alanlar, atölye katılımcıları, JSİ öğrencileri)</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Projenin devam edip etmeyeceğini. Bu erişim verilmezse ürün varsayımlarla inşa edilir — ve varsayımla inşa edilen ürünler batar.</p>
+      </li>
+      <li class="q"><span class="q__n">C2</span>
+        <p class="q__text">Bu insanların rüyalarını şu an nereye yazdığını biliyor musunuz? Kâğıt defter, telefon notu, ses kaydı, hiçbiri?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Gerçek rakibimizi. Rakip başka bir uygulama değil, muhtemelen <em>iPhone Notlar</em> ve <em>hiçbir şey</em>.</p>
+      </li>
+      <li class="q"><span class="q__n">C3</span>
+        <p class="q__text">Size en sık gelen şikâyet ne? “Rüyalarımı hatırlamıyorum” mu, “hatırlıyorum ama ne anlama geldiğini bilmiyorum” mu, yoksa başka bir şey mi?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Uygulamanın çözeceği asıl problemi. Bunlar bambaşka iki ürün: biri hatırlama aracı, diğeri anlama aracı.</p>
+      </li>
+      <li class="q"><span class="q__n">C4</span>
+        <p class="q__text">Müşterilerinizin kaçı bir analistle/terapistle düzenli çalışıyor?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> “Seans hazırlığı” çerçevesinin geçerli olup olmadığını. Kimse analize gitmiyorsa o çerçeve çöker ve ürün saf kendi kendine çalışma aracı olur.</p>
+      </li>
+      <li class="q"><span class="q__n">C5</span>
+        <p class="q__text">Daha önce bu kitleye dijital bir şey sattınız mı? (e-kitap, çevrimiçi atölye) Dönüşüm nasıldı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Fiziksel ürün alan birinin dijital ürüne para verip vermediğini. Bu geçiş sanıldığı kadar otomatik değildir.</p>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">D</div>
+      <h2>Para ve beklenti</h2>
+    </div>
+    <p class="block__why">B2C mobil uygulama, ürün kategorileri içinde en zorudur: mağaza komisyonu, edinim maliyeti, düşük ödeme oranı. Buna girip girmeyeceğimize gözü açık karar vermeliyiz.</p>
+    <ul class="qs">
+      <li class="q"><span class="q__n">D1</span>
+        <p class="q__text">Bu uygulamadan ne bekliyorsunuz: gelir mi, marka mı, mevcut müşteriye hizmet mi? Tek cevap seçin.</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Başarı tanımını. “Gelir” dersek ürün bambaşka tasarlanır; “marka” dersek çok daha küçük ve zarif bir şey yaparız. En sık yapılan hata üçünü aynı anda istemektir.</p>
+      </li>
+      <li class="q"><span class="q__n">D2</span>
+        <p class="q__text">Bütçe ve zaman ufku nedir? Uygulama yayınlandıktan sonra 12 ay boyunca bakım ve içerik için ayrılmış kaynak var mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Kapsamı. Terk edilmiş bir uygulama, hiç yapılmamış bir uygulamadan <strong>kötüdür</strong> — araştırmadaki en öfkeli kullanıcı şikâyetleri tam olarak buydu: “uygulama mağazadan kalktı, tüm verilerimi kaybettim.”</p>
+      </li>
+      <li class="q"><span class="q__n">D3</span>
+        <p class="q__text">Ücretsiz mi, ücretli mi, abonelik mi? Deste alanlara ücretsiz verirsek geri kalanı nasıl fiyatlarız?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Gelir modelini. Not: ₺1.800'lük bir deste satan marka için aylık ₺49'luk bir abonelik marka değerini <em>düşürebilir</em>. Tek seferlik ömür boyu lisans daha uygun olabilir.</p>
+      </li>
+      <li class="q"><span class="q__n">D4</span>
+        <p class="q__text">iOS mu Android mi önce? Müşterilerinizin cihaz dağılımını biliyor musunuz?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> İlk sürümün platformunu ve maliyetini. Avrupa + Türkiye premium kitlede cevap büyük ihtimalle iOS, ama tahmin etmek yerine bilmek isteriz.</p>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">E</div>
+      <h2>Sınırlar: veri, mahremiyet, sorumluluk</h2>
+    </div>
+    <p class="block__why">Rüya, bir insanın verebileceği en mahrem veri. Bu blok pazarlıksızdır; cevaplar ürünün mimarisini doğrudan belirler.</p>
+    <ul class="qs">
+      <li class="q"><span class="q__n">E1</span>
+        <p class="q__text">Kullanıcı rüyaları sunucuda tutulsun mu, yoksa yalnızca cihazda mı kalsın?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Tüm mimariyi. Sunucu = senkron, yedek, cihaz değiştirme kolaylığı, ama aynı zamanda KVKK/GDPR yükümlülüğü ve bir veri sızıntısı riski. Bu kategoride sızıntının bedeli ölçülemez.</p>
+      </li>
+      <li class="q"><span class="q__n">E2</span>
+        <p class="q__text">Kullanıcı verisini analiz etmek — örneğin “kullanıcılarımızda en sık hangi semboller çıkıyor” — istiyor musunuz?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Toplu veri toplayıp toplamayacağımızı. Pazarlama açısından çekici, etik açıdan hassas. Cevap “evet” ise en baştan anonimleştirme ve açık rıza tasarlanmalı.</p>
+      </li>
+      <li class="q"><span class="q__n">E3</span>
+        <p class="q__text">Uygulamada bir kullanıcı ağır bir travma ya da kendine zarar verme içeriği yazarsa ne olmalı? Bir yönlendirme protokolünüz var mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Klinik güvenlik katmanını. Bu soruya “düşünmedik” cevabı gelirse, yayına çıkmadan önce bir uzmanla oturup bunu tanımlamamız gerekir.</p>
+      </li>
+      <li class="q"><span class="q__n">E4</span>
+        <p class="q__text">Sembol ve arketip içeriğini kim onaylayacak? JSİ tarafında içeriği imzalayacak bir uzman var mı?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> İçeriğin otoritesini. Uygulamanın en büyük farklılaştırıcısı sözlük; arkasında isim varsa değeri katlanır.</p>
+      </li>
+      <li class="q"><span class="q__n">E5</span>
+        <p class="q__text">Kâbus bozukluğu için kanıta dayalı bir protokol (Imagery Rehearsal Therapy) ilerideki bir sürümde ilginizi çeker mi?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Uzun vadeli yönü. IRT, uyku tıbbı akademisi tarafından birinci basamak önerilen, Level A kanıtlı bir yöntem — ürünün girebileceği en güçlü “ağrı kesici” alan. Ama klinik ortaklık ve sorumluluk gerektirir. Şimdi karar vermeyelim, sadece niyeti bilelim.</p>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section class="block">
+    <div class="block__head">
+      <div class="block__key">F</div>
+      <h2>Kim karar veriyor</h2>
+    </div>
+    <ul class="qs">
+      <li class="q"><span class="q__n">F1</span>
+        <p class="q__text">Ürün kararlarında son sözü kim söylüyor? Tek kişi mi, kurul mu?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Hızı. İki kurum arasında bölünmüş karar yetkisi projelerin en sık ölüm sebebidir.</p>
+      </li>
+      <li class="q"><span class="q__n">F2</span>
+        <p class="q__text">Sizin tarafınızdan haftada kaç saat ayrılabilir? İçerik, metin ve uzman görüşü için bir isim atanabilir mi?</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Gerçekçi takvimi. Yazılım tarafı hızlı; içerik ve onay tarafı yavaşsa proje orada tıkanır.</p>
+      </li>
+      <li class="q"><span class="q__n">F3</span>
+        <p class="q__text">Bu işi ne zaman yayında görmek istiyorsunuz — ve o tarihin bir sebebi var mı? (Fuar, atölye, lansman, sezon)</p>
+        <p class="q__decides"><b>Neye karar veriyor:</b> Kapsamı geriye doğru. Sebebi olan bir tarih plan yapılabilir; “mümkün olan en kısa sürede” bir tarih değildir.</p>
+      </li>
+    </ul>
+  </section>
+
+  <div class="gate">
+    <div class="gate__tag">Sonrasında ne olacak</div>
+    <p>A, B ve C bloklarının cevapları geldiğinde <strong>iki haftalık bir doğrulama</strong> öneriyorum — kod yazmadan:</p>
+    <p><strong>1.</strong> 20 görüşme. Aranan tepki “iyi fikir” değil, <em>“bunu istiyorum”</em>.<br>
+    <strong>2.</strong> Deste alıcılarına indirimli ön satış. Ürün henüz yokken <strong>en az 5 satın alma</strong>.<br>
+    <strong>3.</strong> Dört hafta boyunca hizmeti <strong>elle</strong> verelim — rüyaları elle derleyip geri bildirim hazırlayalım. Kodu değil, süreci geliştirelim.</p>
+    <p>Bu üçü tutmazsa ürün yapılmamalı. Tutarsa, ne inşa edeceğimizi tahmin ederek değil bilerek başlarız.</p>
+  </div>
+
+  <div class="closing">
+    <div class="mast__eyebrow">Tek cümlede</div>
+    <p class="closing__q">Elimizde çalışan bir demo ve €33'e ürün alan gerçek bir kitle var. Eksik olan tek şey, o kitlenin sabah uyandığında ne yaşadığını bilmek.</p>
+    <p>Yukarıdaki soruların hepsini cevaplamak zorunda değilsiniz. <strong>A1, A3, B4, C1 ve D1</strong> — bu beşi cevaplarsanız yola çıkabiliriz.</p>
+  </div>
+
+</div>
