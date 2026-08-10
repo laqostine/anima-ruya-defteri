@@ -346,7 +346,8 @@ a { color: inherit; text-decoration: none; }
 /* Segmented control */
 .segmented { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: var(--r-pill); border: 1px solid var(--border); }
 .segmented button {
-  flex: 1; min-height: 44px; border: 0; border-radius: var(--r-pill);
+  flex: 1 1 0; min-width: 0; min-height: 44px; border: 0; border-radius: var(--r-pill);
+  padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: transparent; color: var(--ink-2); font-size: 14px; font-weight: 600; cursor: pointer;
   transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
@@ -493,11 +494,27 @@ a { color: inherit; text-decoration: none; }
 .bar__cap { position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: var(--c, var(--chart-1)); }
 
 /* ---------- 12b. Constellation map ---------- */
-.cn-wrap {
-  background: var(--surface); border: 1px solid var(--border);
+.cn-wrap, .atlas-wrap {
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 62%),
+    var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg); padding: var(--sp-2);
   overflow: hidden;
 }
+/* A faint field behind the marks — depth without noise. */
+.cn-wrap::before, .atlas-wrap::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(85% 75% at 50% 45%, #000 35%, transparent 78%);
+  -webkit-mask-image: radial-gradient(85% 75% at 50% 45%, #000 35%, transparent 78%);
+  opacity: .55;
+}
+.cn-wrap > svg, .atlas-wrap > svg { position: relative; }
 .cn { width: 100%; height: auto; display: block; touch-action: manipulation; }
 .cn__edges line { transition: stroke-opacity var(--dur-fast) var(--ease); }
 .cn__node { cursor: pointer; }
@@ -511,9 +528,10 @@ a { color: inherit; text-decoration: none; }
   stroke-width: 3;
 }
 .cn__label {
-  font-family: var(--font-ui); font-size: 10.5px; font-weight: 500;
-  fill: var(--ink-2); paint-order: stroke;
-  stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round;
+  font-family: var(--font-ui); font-size: 10.5px; font-weight: 600;
+  fill: var(--ink); paint-order: stroke;
+  stroke: var(--bg); stroke-width: 4.5px; stroke-linejoin: round;
+  letter-spacing: .005em;
 }
 
 .cn-legend {
@@ -584,6 +602,53 @@ a { color: inherit; text-decoration: none; }
 .dtable td { padding: 11px var(--sp-3) 11px 0; border-bottom: 1px solid var(--border); color: var(--ink-2); }
 .dtable tr:last-child td { border-bottom: 0; }
 .dtable .num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+
+/* ---------- 12e. Atlas ---------- */
+.atlas { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.atlas__land {
+  fill: color-mix(in srgb, var(--surface-3) 82%, var(--ink));
+  stroke: var(--border-str); stroke-width: .6;
+  fill-rule: evenodd; vector-effect: non-scaling-stroke;
+}
+.atlas__ring {
+  fill: none; stroke: var(--accent); stroke-width: 1; opacity: .35;
+  animation: pulse 3.6s var(--ease) infinite;
+}
+.atlas__pinlabel {
+  font-family: var(--font-ui); font-size: 9.5px; font-weight: 600;
+  fill: var(--accent); paint-order: stroke;
+  stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round;
+}
+.atlas__pin { cursor: pointer; }
+.atlas__pin > circle:not([fill="transparent"]) {
+  transition: fill-opacity var(--dur-fast) var(--ease), r var(--dur-fast) var(--ease);
+}
+.atlas__halo { animation: pulse 3.6s var(--ease) infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes pulse { 0%, 100% { opacity: .14; } 50% { opacity: .30; } }
+.atlas__pin:hover > circle:not([fill="transparent"]),
+.atlas__pin:focus-visible > circle:not([fill="transparent"]) { fill-opacity: .85; }
+.atlas__pin:focus { outline: none; }
+.atlas__pin:focus-visible > circle:last-child { stroke-width: 3; }
+.atlas__pin.is-empty .atlas__halo { display: none; }
+
+.atlas-key {
+  width: 12px; height: 12px; border-radius: 50%; flex: none;
+  border: 1.6px solid var(--k); background: color-mix(in srgb, var(--k) 50%, transparent);
+}
+.atlas-key[style*="--dash"] { background: transparent; border-style: dashed; }
+
+/* ---------- 12f. Callout ---------- */
+.callout {
+  background: var(--accent-sub);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: var(--r-lg); padding: var(--sp-4);
+}
+.callout__title {
+  font-family: var(--font-display); font-size: 17px; font-weight: 500;
+  color: var(--accent); margin-bottom: 6px;
+}
+.callout__text { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
 
 /* ---------- 13. Lexicon list ---------- */
 .lex-list { display: flex; flex-direction: column; gap: 2px; }

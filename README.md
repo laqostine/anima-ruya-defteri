@@ -54,6 +54,27 @@ All 55 themes and their prevalences live in `assets/js/norms.js`, transcribed fr
 
 **The app states the caveat wherever the numbers appear**: `p` is *lifetime* prevalence — the share of people who report ever having had that dream, not the share of dreams — and the sample is Canadian undergraduates, not Turkish adults. A reading only calls a theme "standing out" when your rate runs ≥1.6× the norm on at least two occurrences.
 
+
+## Dream atlas — the world map layer
+
+`Desenler › Harita` has three layers: **Sen** (your own graph), **Kolektif** (typical-dream prevalence as a constellation), **Dünya** (a real world map of where that data exists).
+
+The map geometry is generated, not hand-drawn: `scripts/mkworld.js` pulls Natural Earth 110m from world-atlas, drops Antarctica, projects with Natural Earth I into an 800×400 viewBox and emits `assets/js/worldmap.js` (~10 KB gzipped, zero runtime dependencies). Regenerate rather than hand-edit.
+
+Markers sit on real projected centroids and are graded by how much a study actually documents:
+
+| Layer | Country | Study |
+|---|---|---|
+| Full table | Canada | Nielsen et al. (2003), n = 1181, all 55 themes |
+| Partial | Germany | Schredl, Ciric, Götz & Wittmann (2004), top 10 |
+| Partial | Hong Kong / China | Yu (2008), top 5 |
+| Historic | Japan, United States | Griffith, Miyagi & Tago (1958), n = 473, 34 themes |
+| **No data** | **Turkey** | **none exists** |
+
+**Turkey is deliberately empty and says so.** There is no published lifetime-prevalence study on a Turkish sample; Turkish dream research uses different instruments (e.g. the Dream Themes Scale) whose scores are not comparable. Rather than interpolate a plausible-looking number, the map marks the gap in the brand's accent colour, labels it, and names it as a research opportunity for the studio. The same rule governs the whole file: nothing is estimated, interpolated, or filled in.
+
+Below the map, a picker compares any theme measured in two or more countries on one shared 0–100 axis — the payoff a world map actually earns.
+
 ## Sample notebook
 
 Settings → **Örnek defter** loads ten example dreams written to exercise the most prevalent themes, for trying the app or demonstrating it on a table. They are honestly marked, not disguised as records:
@@ -77,6 +98,8 @@ assets/js/i18n.js       UI strings + long-form guide content
 assets/js/constellation.js  graph build, force layout, reading rules (pure, no DOM)
 assets/js/norms.js      Nielsen et al. (2003) prevalence table + comparison
 assets/js/sample.js     the ten sample dreams (tr/en)
+assets/js/atlas.js      per-country studies (and Turkey's documented absence)
+assets/js/worldmap.js   GENERATED world geometry — see scripts/mkworld.js
 assets/js/app.js        store, hash router, views, capture flow
 sw.js                   offline shell
 qr/                     QR code + printable A6 card

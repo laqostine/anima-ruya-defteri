@@ -141,9 +141,9 @@ window.STRINGS = {
     layerMine: 'Sen', layerAll: 'Kolektif',
     collectiveTitle: 'Kolektif harita',
     collectiveSub: 'İnsanların genelinde en yaygın rüya temaları. Düğüm büyüklüğü yaşam boyu yaygınlığı gösterir.',
-    normPrevalence: p => `Yaşam boyu yaygınlık: %${p}`,
+    normPrevalence: p => `Yaşam boyu yaygınlık: %${String(p).replace('.', ',')}`,
     normRank: r => `${r}. sırada`,
-    normGender: (m, w) => `Erkek %${m} · Kadın %${w}`,
+    normGender: (m, w) => `Erkek %${String(m).replace('.', ',')} · Kadın %${String(w).replace('.', ',')}`,
     normSource: 'Kaynak',
     normCaveat: 'Bu oran, “hayatında en az bir kez bu rüyayı gördüm” diyenlerin oranıdır — rüyaların yüzdesi değil. Örneklem Kanadalı üniversite öğrencileri; Türkiye için birebir geçerli sayılmamalı.',
     normInYours: (c, n) => `Senin defterinde ${c} / ${n} rüyada`,
@@ -164,6 +164,21 @@ window.STRINGS = {
     sampleCleared: 'Örnek kayıtlar kaldırıldı',
     sampleBadge: 'Örnek',
     sampleNotice: 'Bu defterde örnek kayıtlar var. Ayarlar’dan kaldırabilirsin.',
+
+
+    /* atlas */
+    layerAtlas: 'Dünya',
+    atlasTitle: 'Rüya atlası',
+    atlasSub: 'Tipik rüya yaygınlığının gerçekten ölçüldüğü yerler. Boş bırakılan ülkelerde yayımlanmış veri yok — tahmin eklenmedi.',
+    atlasFull: 'Tam tablo', atlasPartial: 'Kısmi', atlasHistoric: 'Tarihsel', atlasNone: 'Veri yok',
+    atlasThemes: n => `${n} tema ölçülmüş`,
+    atlasSample: n => `Örneklem: ${n} kişi`,
+    atlasNoStudy: 'Yayımlanmış yaygınlık çalışması yok',
+    atlasCompare: 'Ülkelere göre karşılaştır',
+    atlasPickTheme: 'Tema seç',
+    atlasTrCallout: 'Türkiye haritada boş',
+    atlasTrText: 'Türkçe örneklemle yapılmış, karşılaştırılabilir bir yaşam boyu yaygınlık çalışması bulamadık. Bu boşluğu doldurmak Jungian Studies İstanbul için gerçek bir araştırma fırsatı.',
+    atlasSourceNote: 'Tüm oranlar yayımlanmış çalışmalardan; ülkeler arası farklar örneklem, dönem ve ölçek farklarını da yansıtır.',
 
     /* about */
     aboutTitle: 'Rehber',
@@ -344,6 +359,20 @@ window.STRINGS = {
     sampleCleared: 'Sample entries removed',
     sampleBadge: 'Sample',
     sampleNotice: 'This notebook contains sample entries. You can remove them in Settings.',
+
+
+    layerAtlas: 'World',
+    atlasTitle: 'Dream atlas',
+    atlasSub: 'Where typical-dream prevalence has actually been measured. Countries left empty have no published data — nothing was estimated in.',
+    atlasFull: 'Full table', atlasPartial: 'Partial', atlasHistoric: 'Historic', atlasNone: 'No data',
+    atlasThemes: n => `${n} themes measured`,
+    atlasSample: n => `Sample: ${n} people`,
+    atlasNoStudy: 'No published prevalence study',
+    atlasCompare: 'Compare across countries',
+    atlasPickTheme: 'Choose a theme',
+    atlasTrCallout: 'Turkey is blank on this map',
+    atlasTrText: 'We could not find a comparable lifetime-prevalence study on a Turkish sample. Filling that gap is a genuine research opportunity for Jungian Studies İstanbul.',
+    atlasSourceNote: 'All figures come from published studies; differences between countries also reflect differences in sample, period and instrument.',
 
     aboutTitle: 'Guide',
     aboutSub: 'How to work with a dream — a short method.',

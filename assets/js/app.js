@@ -105,6 +105,11 @@
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
   }
 
+  function fmtPct(v, digits) {
+    const n = Number(v).toFixed(digits == null ? 1 : digits);
+    return state.lang === 'tr' ? '%' + n.replace('.', ',') : n + '%';
+  }
+
   function archById(id) { return ARCHETYPES.find(a => a.id === id); }
   function symByName(name) {
     const n = name.toLocaleLowerCase(state.lang);
@@ -844,6 +849,127 @@
     openSheet(name, html);
   }
 
+
+  /* =========================================================
+     VIEW · Atlas — where the data actually exists
+     ========================================================= */
+  let atlasTheme = 'chased';
+
+  const ATLAS_DEPTH = {
+    full:     { c: 'var(--chart-1)', k: 'atlasFull' },
+    partial:  { c: 'var(--chart-2)', k: 'atlasPartial' },
+    historic: { c: 'var(--chart-3)', k: 'atlasHistoric' },
+    none:     { c: 'var(--ink-3)',   k: 'atlasNone' }
+  };
+
+  function worldSVG() {
+    const W = window.WORLD.w, H = window.WORLD.h;
+    const marks = window.ATLAS.COUNTRIES.map(c => {
+      const at = window.WORLD.at[c.iso];
+      if (!at) return '';
+      const d = ATLAS_DEPTH[c.depth];
+      const top = c.themes.length ? c.themes[0][1] : 0;
+      const r = c.depth === 'none' ? 7 : 6 + Math.round(top / 12);
+      const empty = c.depth === 'none';
+      const name = c[state.lang] || c.en;
+      // The empty marker is the point of this map, not a leftover — it gets a
+      // name and a ring bright enough to read against land.
+      return `<g class="atlas__pin${empty ? ' is-empty' : ''}" transform="translate(${at[0]} ${at[1]})"
+                 tabindex="0" role="button" data-country="${esc(c.iso)}"
+                 aria-label="${esc(name)} — ${esc(empty ? t('atlasNoStudy') : t('atlasThemes', c.themes.length))}">
+                <circle r="24" fill="transparent"/>
+                ${empty
+                  ? `<circle class="atlas__ring" r="${r + 5}"/>
+                     <circle r="${r}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3.2 2.6"/>
+                     <text class="atlas__pinlabel" y="${r + 15}" text-anchor="middle">${esc(name)}</text>`
+                  : `<circle class="atlas__halo" r="${r + 7}" fill="${d.c}" opacity=".14"/>
+                     <circle r="${r}" fill="${d.c}" fill-opacity=".62" stroke="${d.c}" stroke-width="1.4"/>`}
+              </g>`;
+    }).join('');
+
+    return `<svg class="atlas" viewBox="0 0 ${W} ${H}" role="img"
+      aria-label="${esc(t('atlasTitle'))}">
+      <path class="atlas__land" d="${window.WORLD.land}"/>
+      ${marks}</svg>`;
+  }
+
+  function atlasCompare() {
+    const keys = window.ATLAS.comparable();
+    if (!keys.includes(atlasTheme)) atlasTheme = keys[0];
+    const rows = window.ATLAS.series(atlasTheme).map(r => [
+      (r.country[state.lang] || r.country.en) + (r.country.year ? ` · ${r.country.year}` : ''),
+      r.v
+    ]);
+    const opts = keys.map(k => {
+      const lab = window.ATLAS.THEME_LABELS[k];
+      return `<option value="${esc(k)}"${k === atlasTheme ? ' selected' : ''}>${esc(lab[state.lang] || lab.en)}</option>`;
+    }).join('');
+
+    // Bars are percentages of a common 0–100 scale, so they share one axis.
+    const max = 100;
+    const bars = rows.map(([label, v], i) => `
+      <div class="bar" style="--w:${v}%;--i:${i};--c:var(--chart-2)">
+        <span class="bar__track" aria-hidden="true"></span>
+        <span class="bar__fill" aria-hidden="true"></span>
+        <span class="bar__cap" aria-hidden="true"></span>
+        <span class="bar__label"><span>${esc(label)}</span></span>
+        <span class="bar__value">${esc(fmtPct(v))}</span>
+      </div>`).join('');
+
+    return `<div class="section">
+      <h2 class="section__title">${esc(t('atlasCompare'))}</h2>
+      <label class="sr-only" for="atlasSel">${esc(t('atlasPickTheme'))}</label>
+      <select class="select" id="atlasSel" style="margin-bottom:var(--sp-4)">${opts}</select>
+      <div class="bars">${bars}</div>
+      <p class="hint">${esc(t('atlasSourceNote'))}</p>
+    </div>`;
+  }
+
+  function viewAtlas() {
+    const legend = Object.entries(ATLAS_DEPTH).map(([k, d]) =>
+      `<span class="cn-key"><i class="atlas-key" style="--k:${k === 'none' ? 'var(--accent)' : d.c}${k === 'none' ? ';--dash:1' : ''}"></i>${esc(t(d.k))}</span>`).join('');
+
+    return `
+      <div class="section">
+        <p class="hint" style="margin:-4px 0 var(--sp-3)">${esc(t('atlasSub'))}</p>
+        <div class="atlas-wrap">${worldSVG()}</div>
+        <div class="cn-legend">${legend}</div>
+      </div>
+      ${atlasCompare()}
+      <div class="section">
+        <div class="callout">
+          <h3 class="callout__title">${esc(t('atlasTrCallout'))}</h3>
+          <p class="callout__text">${esc(t('atlasTrText'))}</p>
+        </div>
+      </div>`;
+  }
+
+  function countrySheet(iso) {
+    const c = window.ATLAS.get(iso);
+    if (!c) return;
+    const name = c[state.lang] || c.en;
+    const note = state.lang === 'tr' ? c.noteTr : c.noteEn;
+    const cite = state.lang === 'tr' ? c.cite : (c.citeEn || c.cite);
+    const rows = c.themes.map(([k, v]) => {
+      const lab = window.ATLAS.THEME_LABELS[k];
+      return `<tr><td>${esc(lab ? (lab[state.lang] || lab.en) : k)}</td><td class="num">${esc(fmtPct(v))}</td></tr>`;
+    }).join('');
+
+    openSheet(name, `
+      <div class="prose">
+        <p style="color:var(--ink-3);font-size:13px;margin-bottom:var(--sp-3)">
+          ${esc(t(ATLAS_DEPTH[c.depth].k))}${c.n ? ' · ' + esc(t('atlasSample', c.n)) : ''}${c.year ? ' · ' + c.year : ''}
+        </p>
+        ${rows ? `<table class="dtable">
+            <thead><tr><th scope="col">${esc(t('mapTableA'))}</th><th scope="col" class="num">${esc(t('mapTableW'))}</th></tr></thead>
+            <tbody>${rows}</tbody></table>`
+          : `<p><strong>${esc(t('atlasNoStudy'))}</strong></p>`}
+        ${note ? `<p style="margin-top:var(--sp-4)">${esc(note)}</p>` : ''}
+        ${cite ? `<h4>${esc(t('normSource'))}</h4><p style="font-size:13.5px">${esc(cite)}</p>` : ''}
+        <p class="hint" style="margin:0">${esc(t('normCaveat'))}</p>
+      </div>`);
+  }
+
   function normTable() {
     const rows = window.NORMS.THEMES.slice(0, 16);
     return `<div class="section">
@@ -855,7 +981,7 @@
         </tr></thead>
         <tbody>${rows.map(th => `<tr>
           <td>${esc(th[state.lang] || th.en)}</td>
-          <td class="num">%${th.p.toFixed(1)}</td></tr>`).join('')}</tbody>
+          <td class="num">${esc(fmtPct(th.p))}</td></tr>`).join('')}</tbody>
       </table>
       <p class="hint">${esc(t('normCaveat'))}</p>
     </div>`;
@@ -867,7 +993,10 @@
       <div class="segmented" role="group" aria-label="${esc(t('mapTitle'))}" style="margin-bottom:var(--sp-4)">
         <button type="button" data-maplayer="mine" aria-pressed="${layer === 'mine'}">${esc(t('layerMine'))}</button>
         <button type="button" data-maplayer="all" aria-pressed="${layer === 'all'}">${esc(t('layerAll'))}</button>
+        <button type="button" data-maplayer="atlas" aria-pressed="${layer === 'atlas'}">${esc(t('layerAtlas'))}</button>
       </div>`;
+
+    if (layer === 'atlas') return layerSwitch + viewAtlas();
 
     if (layer === 'all') {
       const gc = buildGraph('all');
@@ -934,7 +1063,7 @@
           <button type="button" data-pattab="summary" aria-pressed="${patTab === 'summary'}">${esc(t('tabSummary'))}</button>
           <button type="button" data-pattab="map" aria-pressed="${patTab === 'map'}">${esc(t('tabMap'))}</button>
         </div>
-        ${patTab === 'map' ? viewMap('all') : emptySummary}
+        ${patTab === 'map' ? viewMap(mapLayer === 'mine' ? 'all' : null) : emptySummary}
         ${footer()}`;
     }
 
@@ -1232,6 +1361,16 @@
       }));
       $$('[data-opennorm]', root).forEach(b =>
         b.addEventListener('click', () => normSheet(b.dataset.opennorm)));
+
+      const openCountry = el => countrySheet(el.dataset.country);
+      $$('[data-country]', root).forEach(el => {
+        el.addEventListener('click', () => openCountry(el));
+        el.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCountry(el); }
+        });
+      });
+      const sel = $('#atlasSel', root);
+      if (sel) sel.addEventListener('change', () => { atlasTheme = sel.value; render(); });
 
       const open = key => {
         const [kind, id] = key.split(':');
