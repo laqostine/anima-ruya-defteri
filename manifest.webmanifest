@@ -1,0 +1,20 @@
+{
+  "name": "Anima — Rüya Defteri",
+  "short_name": "Anima",
+  "description": "Jungian Studies İstanbul için analitik psikoloji temelli rüya defteri.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./#/dreams",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0E1A",
+  "theme_color": "#0B0E1A",
+  "categories": ["lifestyle", "health", "education"],
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
